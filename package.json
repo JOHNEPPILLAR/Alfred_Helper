@@ -1,0 +1,17 @@
+{
+  "name": "alfred_helper_functions",
+  "version": "1.0.0",
+  "description": "ALFRED - Heler functions",
+  "author": "JP",
+  "dependencies": {
+    "pino": "^5.13.3",
+    "request-promise": "^4.2.4",
+    "path": "^0.12.7",
+    "os": "^0.1.1"
+  },
+  "devDependencies": {
+    "eslint": "^6.4.0",
+    "eslint-config-airbnb-base": "^14.0.0",
+    "eslint-plugin-import": "^2.18.2"
+  }
+}
