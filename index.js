@@ -36,7 +36,6 @@ function traceInfo() {
 
 async function log(type, message) {
   let logger;
-  let child = logger.child({ index: 'log' });
 
   try {
     if (process.env.Environment === 'dev') {
@@ -49,6 +48,7 @@ async function log(type, message) {
     } else {
       logger = pino();
     }
+    let child = logger.child({ index: 'log' });
 
     switch (type) {
       case 'info':
