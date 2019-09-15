@@ -52,22 +52,22 @@ async function log(type, message) {
 
     switch (type) {
       case 'info':
-        logger.info(message);
+        child.info(message);
         break;
       case 'trace':
-        logger.trace(`${traceInfo()} - ${message}`);
+        child.trace(`${traceInfo()} - ${message}`);
         break;
       case 'debug':
-        logger.debug(`${traceInfo()} - ${message}`);
+        child.debug(`${traceInfo()} - ${message}`);
         break;
       case 'warn':
-        logger.warn(`${traceInfo()} - ${message}`);
+        child.warn(`${traceInfo()} - ${message}`);
         break;
       case 'error':
-        logger.error(`${traceInfo()} - ${message}`);
+        child.error(`${traceInfo()} - ${message}`);
         break;
       case 'fatal':
-        logger.fatal(`${traceInfo()} - ${message}`);
+        child.fatal(`${traceInfo()} - ${message}`);
         break;
       case 'health':
         child = logger.child({ index: 'health' });
