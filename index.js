@@ -230,6 +230,53 @@ exports.sendResponse = (res, status, dataObj) => {
   res.send(httpHeaderCode, returnJSON); // Send response back to caller
 };
 
+
+/**
+ * Lights
+ */
+exports.getLightName = (param) => {
+  const lightName = global.lightNames.filter((o) => o.id.toString() === param.toString());
+  if (lightName.length > 0) {
+    return lightName[0].name;
+  }
+  return '[not defined]';
+};
+
+exports.getLightGroupName = (param) => {
+  const lightGroupName = global.lightGroupNames.filter((o) => o.id.toString() === param.toString());
+  if (lightGroupName.length > 0) {
+    return lightGroupName[0].name;
+  }
+  return '[not defined]';
+};
+
+/**
+ * Light scene
+ */
+exports.lightSceneXY = (scene) => {
+  let xy;
+  switch (scene) {
+    case 1: // Sunrise
+      xy = [0.2488, 0.2012];
+      break;
+    case 2: // Daytime
+      xy = [0.3104, 0.3234];
+      break;
+    case 3: // Sunset
+      xy = [0.4425, 0.4061];
+      break;
+    case 4: // Evening
+      xy = [0.5015, 0.4153];
+      break;
+    case 5: // Nighttime
+      xy = [0.5554, 0.3668];
+      break;
+    default:
+      xy = [0.3104, 0.3234];
+  }
+  return xy;
+};
+
 /**
  * Misc
  */
