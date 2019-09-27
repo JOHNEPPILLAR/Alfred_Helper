@@ -230,6 +230,17 @@ exports.sendResponse = (res, status, dataObj) => {
   res.send(httpHeaderCode, returnJSON); // Send response back to caller
 };
 
+// Ping API
+exports.ping = (res, next) => {
+  log('trace', 'Ping API called');
+
+  const ackJSON = {
+    service: process.env.ServiceName,
+    reply: 'pong',
+  };
+  res.send(200, ackJSON); // Send response back to caller
+  next();
+};
 
 /**
  * Lights
