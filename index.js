@@ -6,8 +6,6 @@ const rp = require('request-promise');
 const os = require('os');
 const path = require('path');
 
-require('dotenv').config();
-
 /**
  * Setup logger
  */
@@ -233,11 +231,11 @@ exports.sendResponse = (res, status, dataObj) => {
 };
 
 // Ping API
-exports.ping = (res, next) => {
+exports.ping = (res, next, serviceName) => {
   log('trace', 'Ping API called');
 
   const ackJSON = {
-    service: process.env.ServiceName,
+    service: serviceName,
     reply: 'pong',
   };
   res.send(200, ackJSON); // Send response back to caller
