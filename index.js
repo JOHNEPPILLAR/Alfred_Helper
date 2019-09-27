@@ -231,11 +231,10 @@ exports.sendResponse = (res, status, dataObj) => {
 };
 
 // Ping API
-exports.ping = (res, next, serviceName) => {
+exports.ping = (res, next) => {
   log('trace', 'Ping API called');
 
   const ackJSON = {
-    service: serviceName,
     reply: 'pong',
   };
   res.send(200, ackJSON); // Send response back to caller
