@@ -6,6 +6,8 @@ const rp = require('request-promise');
 const os = require('os');
 const path = require('path');
 
+require('dotenv').config();
+
 /**
  * Setup logger
  */
