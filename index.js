@@ -195,6 +195,26 @@ exports.callAPIServicePut = async (apiURL, body) => {
   return apiResponse;
 };
 
+
+/**
+ * Call a remote servide
+ */
+exports.callAPIService = (apiURL, body) => {
+  const options = {
+    method: 'GET',
+    uri: apiURL,
+    json: true,
+    body,
+  };
+  try {
+    return rp(options);
+  } catch (err) {
+    log('error', `Error calling: ${err.message}`);
+    log('error', err.message);
+    return err;
+  }
+};
+
 /**
  * Construct and send JSON response back to caller
  */
