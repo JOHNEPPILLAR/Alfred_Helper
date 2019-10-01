@@ -4,14 +4,16 @@
   "description": "ALFRED - Heler functions",
   "author": "JP",
   "dependencies": {
-    "pino": "^5.13.3",
+    "pino": "^5.13.4",
     "request-promise": "^4.2.4",
     "path": "^0.12.7",
     "os": "^0.1.1",
-    "dotenv": "^8.1.0"
+    "dotenv": "^8.1.0",
+    "geolib": "^3.0.4",
+    "moment": "^2.24.0"
   },
   "devDependencies": {
-    "eslint": "^6.4.0",
+    "eslint": "^6.5.1",
     "eslint-config-airbnb-base": "^14.0.0",
     "eslint-plugin-import": "^2.18.2"
   }

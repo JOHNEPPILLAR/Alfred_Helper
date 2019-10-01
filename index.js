@@ -5,6 +5,9 @@ const pino = require('pino');
 const rp = require('request-promise');
 const os = require('os');
 const path = require('path');
+const geolib = require('geolib');
+const fs = require('fs');
+const moment = require('moment');
 
 /**
  * Setup logger
@@ -332,12 +335,16 @@ exports.GetSortOrder = (prop) => {
   return obj;
 };
 
-exports.zeroFill = (number, width) => {
+function zeroFill(number, width) {
   const pad = width - number.toString().length;
   if (pad > 0) {
     return new Array(pad + (/\./.test(number) ? 2 : 1)).join('0') + number;
   }
   return `${number}`; // always return a string
+}
+exports.zeroFill = (number, width) => {
+  const response = zeroFill(number, width);
+  return response;
 };
 
 exports.cleanString = (input) => {
@@ -393,4 +400,77 @@ exports.getProcessInfo = () => {
     argv: process.argv,
   };
   return processInfo;
+};
+
+exports.inHomeGeoFence = function FnInHomeGeoFence(lat, long) {
+  const geoHomeFile = './geoHome.json';
+  const geoFenceHomeData = JSON.parse(fs.readFileSync(geoHomeFile, 'utf8'));
+  return geolib.isPointInPolygon({ latitude: lat, longitude: long }, geoFenceHomeData);
+};
+
+exports.inJPWorkGeoFence = function FnInJPWorkGeoFence(lat, long) {
+  const geoJPWorkFile = './geoJPWork.json';
+  const geoFenceHomeData = JSON.parse(fs.readFileSync(geoJPWorkFile, 'utf8'));
+  return geolib.isPointInPolygon({ latitude: lat, longitude: long }, geoFenceHomeData);
+};
+
+
+exports.addDays = function FnAddDays(date, amount) {
+  const tzOff = date.getTimezoneOffset() * 60 * 1000;
+  let t = date.getTime();
+  const d = new Date();
+
+  t += 1000 * 60 * 60 * 24 * amount;
+  d.setTime(t);
+
+  const tzOff2 = d.getTimezoneOffset() * 60 * 1000;
+  if (tzOff !== tzOff2) {
+    const diff = tzOff2 - tzOff;
+    t += diff;
+    d.setTime(t);
+  }
+  return d;
+};
+
+exports.addTime = (startTime, addTime) => {
+  try {
+    let newEndTime = moment();
+    if (startTime !== null) newEndTime = moment(startTime, 'HH:mm');
+    if (typeof addTime === 'undefined') {
+      return startTime;
+    }
+    //    const newAddTime = moment.duration(addTime);
+    newEndTime.add(addTime, 'minutes');
+    return newEndTime.format('HH:mm');
+  } catch (err) {
+    return startTime;
+  }
+};
+
+exports.timeDiff = (startTime, timeFromNow, addMinutes, displayHrs) => {
+  let newStartTime = moment();
+  if (startTime !== null) newStartTime = moment(startTime, 'HH:mm');
+  const newEndTime = moment(timeFromNow, 'HH:mm');
+
+  if (newStartTime.isAfter(newEndTime)) newEndTime.add(1, 'days');
+
+  let addMinutesToTime = 0;
+  if (typeof addMinutes !== 'undefined') addMinutesToTime = addMinutes;
+  newEndTime.add(addMinutesToTime, 'minutes');
+
+  let minutes = newEndTime.diff(newStartTime, 'minutes');
+  if (minutes < 0) minutes = 0;
+  let returnString = `${minutes}`;
+
+  if (displayHrs) {
+    let hours = newStartTime.diff(newEndTime, 'hours');
+    if (hours < 0) hours = 0;
+
+    if (minutes > 60) {
+      hours = 1;
+      minutes -= 60;
+    }
+    returnString = `${zeroFill(hours, 2)}:${zeroFill(minutes, 2)}`;
+  }
+  return returnString;
 };
