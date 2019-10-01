@@ -195,11 +195,10 @@ exports.callAPIServicePut = async (apiURL, body) => {
   return apiResponse;
 };
 
-
 /**
- * Call a remote servide
+ * Call 3rd party API with GET
  */
-exports.callAPIService = (apiURL, body) => {
+async function callAPIService(apiURL, body) {
   const options = {
     method: 'GET',
     uri: apiURL,
@@ -213,6 +212,10 @@ exports.callAPIService = (apiURL, body) => {
     log('error', err.message);
     return err;
   }
+}
+exports.callAPIService = async (apiURL, body) => {
+  const apiResponse = await callAPIService(apiURL, body);
+  return apiResponse;
 };
 
 /**
