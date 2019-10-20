@@ -92,7 +92,7 @@ exports.log = (type, message) => {
 /**
  * Call another Alfred service with PUT
  */
-async function callAlfredServicePut(apiURL, body, retryCounter) {
+async function callAlfredServicePut(apiURL, body) {
   const options = {
     method: 'PUT',
     uri: apiURL,
@@ -101,8 +101,8 @@ async function callAlfredServicePut(apiURL, body, retryCounter) {
       rejectUnauthorized: false,
     },
     headers: {
-      'Client-Access-Key': process.env.ClientAccessKey,
-      'API-Trace-ID': global.APITraceID,
+      'client-access-key': process.env.ClientAccessKey,
+      'api-trace-id': global.APITraceID,
     },
     body,
   };
@@ -110,28 +110,18 @@ async function callAlfredServicePut(apiURL, body, retryCounter) {
   try {
     return await rp(options);
   } catch (err) {
-    const errorCode = err.cause.code;
-    let retryCount = retryCounter || 0;
-    if (errorCode === 'ECONNREFUSED') {
-      log('error', `Can not connect to ${apiURL}: ${err.message}`);
-      log('error', `Waiting 1 minute before retrying. Attempt: ${retryCount}`);
-      retryCount += 1;
-      setTimeout(() => {
-        callAlfredServicePut(apiURL, body, retryCount);
-      }, 60000); // 1 minute delay before re-tyring
-    }
     return err;
   }
 }
 exports.callAlfredServicePut = async (apiURL, body) => {
-  const apiResponse = await callAlfredServicePut(apiURL, body, 0);
+  const apiResponse = await callAlfredServicePut(apiURL, body);
   return apiResponse;
 };
 
 /**
  * Call another Alfred service with Get
  */
-async function callAlfredServiceGet(apiURL, retryCounter, noRetry) {
+async function callAlfredServiceGet(apiURL) {
   const options = {
     method: 'GET',
     uri: apiURL,
@@ -140,33 +130,19 @@ async function callAlfredServiceGet(apiURL, retryCounter, noRetry) {
       rejectUnauthorized: false,
     },
     headers: {
-      'Client-Access-Key': process.env.ClientAccessKey,
-      'API-Trace-ID': global.APITraceID,
+      'client-access-key': process.env.ClientAccessKey,
+      'api-trace-id': global.APITraceID,
     },
   };
 
   try {
     return await rp(options);
   } catch (err) {
-    if (noRetry) {
-      log('error', err.message);
-      return err;
-    }
-    const errorCode = err.cause.code;
-    let retryCount = retryCounter || 0;
-    if (errorCode === 'ECONNREFUSED') {
-      log('error', `Can not connect to ${apiURL}: ${err.message}`);
-      log('error', `Waiting 1 minute before retrying. Attempt: ${retryCount}`);
-      retryCount += 1;
-      setTimeout(() => {
-        callAlfredServiceGet(apiURL, retryCount);
-      }, 60000); // 1 minute delay before re-tyring
-    }
     return err;
   }
 }
-exports.callAlfredServiceGet = async (apiURL, noRetry) => {
-  const apiResponse = await callAlfredServiceGet(apiURL, 0, noRetry);
+exports.callAlfredServiceGet = async (apiURL) => {
+  const apiResponse = await callAlfredServiceGet(apiURL);
   return apiResponse;
 };
 
@@ -199,7 +175,7 @@ exports.callAPIServicePut = async (apiURL, body) => {
 /**
  * Call 3rd party API with GET
  */
-async function callAPIService(apiURL, body) {
+async function callAPIServiceGet(apiURL, body) {
   const options = {
     method: 'GET',
     uri: apiURL,
@@ -215,7 +191,7 @@ async function callAPIService(apiURL, body) {
   }
 }
 exports.callAPIService = async (apiURL, body) => {
-  const apiResponse = await callAPIService(apiURL, body);
+  const apiResponse = await callAPIServiceGet(apiURL, body);
   return apiResponse;
 };
 
@@ -229,10 +205,7 @@ exports.sendResponse = (res, status, dataObj) => {
   switch (status) {
     case null: // Internal server error
       httpHeaderCode = 500;
-      rtnData = {
-        name: dataObj.name,
-        message: dataObj.message,
-      };
+      rtnData = dataObj.message;
       break;
     case false: // Invalid params
       httpHeaderCode = 400;
