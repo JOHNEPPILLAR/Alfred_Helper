@@ -102,8 +102,7 @@ async function callAlfredServicePut(apiURL, body, retryCounter) {
     },
     headers: {
       'Client-Access-Key': process.env.ClientAccessKey,
-      'Instance-Trace-ID': global.instanceTraceID,
-      'Call-Trace-ID': global.callTraceID,
+      'API-Trace-ID': global.APITraceID,
     },
     body,
   };
@@ -142,8 +141,7 @@ async function callAlfredServiceGet(apiURL, retryCounter, noRetry) {
     },
     headers: {
       'Client-Access-Key': process.env.ClientAccessKey,
-      'Instance-Trace-ID': global.instanceTraceID,
-      'Call-Trace-ID': global.callTraceID,
+      'API-Trace-ID': global.APITraceID,
     },
   };
 
