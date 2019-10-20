@@ -51,7 +51,7 @@ async function log(type, message) {
     } else {
       logger = pino();
     }
-    let child = logger.child({ index: 'log', trace: global.APITraceID });
+    let child = logger.child({ index: 'log', 'trace-id': `${global.APITraceID}` });
 
     switch (type) {
       case 'info':
