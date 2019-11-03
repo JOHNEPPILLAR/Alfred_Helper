@@ -8,6 +8,7 @@ const path = require('path');
 const geolib = require('geolib');
 const fs = require('fs');
 const moment = require('moment');
+const dateFormat = require('dateformat');
 
 /**
  * Setup logger
@@ -444,4 +445,11 @@ exports.timeDiff = (startTime, timeFromNow, addMinutes, displayHrs) => {
     returnString = `${zeroFill(hours, 2)}:${zeroFill(minutes, 2)}`;
   }
   return returnString;
+};
+
+exports.minutesToStop = function FnMinutesToStop(seconds) {
+  const timetostopinMinutes = Math.floor(seconds / 60);
+  const timeNow = new Date();
+  timeNow.setMinutes(timeNow.getMinutes() + timetostopinMinutes);
+  return dateFormat(timeNow, 'h:MM TT');
 };
