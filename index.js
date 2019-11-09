@@ -204,11 +204,11 @@ exports.sendResponse = (res, status, dataObj) => {
   let rtnData = dataObj;
 
   switch (status) {
-    case null: // Internal server error
+    case 500: // Internal server error
       httpHeaderCode = 500;
       rtnData = dataObj.message;
       break;
-    case false: // Invalid params
+    case 400: // Invalid params
       httpHeaderCode = 400;
       break;
     case 401: // Not authorised, invalid app_key
