@@ -42,7 +42,7 @@ async function log(type, message) {
   let logger;
 
   try {
-    if (process.env.Environment === 'dev') {
+    if (process.env.Environment === 'development') {
       logger = pino({
         level: 'trace',
         prettyPrint: {
