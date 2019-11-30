@@ -453,3 +453,17 @@ exports.minutesToStop = function FnMinutesToStop(seconds) {
   timeNow.setMinutes(timeNow.getMinutes() + timetostopinMinutes);
   return dateFormat(timeNow, 'h:MM TT');
 };
+
+exports.vaultSecret = async function FnVaultSecret(route) {
+  const options = {
+    apiVersion: 'v1',
+    endpoint: process.env.vaultURL,
+    token: process.env.valutToken,
+  };
+  // eslint-disable-next-line global-require
+  const vault = require('node-vault')(options);
+  const vaultData = await vault.read(`secret/${route}`);
+  if (vaultData.data) {
+    return vaultData.data;
+  } return '';
+};
