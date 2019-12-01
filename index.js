@@ -10,9 +10,121 @@ const fs = require('fs');
 const moment = require('moment');
 const dateFormat = require('dateformat');
 
-/**
- * Setup logger
- */
+// Misc
+function isEmptyObject(obj) {
+  if (obj == null) return true;
+  if (obj.length > 0) return false;
+  if (obj.length === 0) return true;
+  if (typeof obj !== 'object') return true;
+  return !Object.keys(obj).length;
+}
+exports.isEmptyObject = (obj) => {
+  const response = isEmptyObject(obj);
+  return response;
+};
+
+exports.GetSortOrder = (prop) => {
+  const obj = function AB(a, b) {
+    if (a[prop] > b[prop]) {
+      return 1;
+    }
+    if (a[prop] < b[prop]) return -1;
+    return 0;
+  };
+  return obj;
+};
+
+function zeroFill(number, width) {
+  const pad = width - number.toString().length;
+  if (pad > 0) {
+    return new Array(pad + (/\./.test(number) ? 2 : 1)).join('0') + number;
+  }
+  return `${number}`; // always return a string
+}
+exports.zeroFill = (number, width) => {
+  const response = zeroFill(number, width);
+  return response;
+};
+
+exports.cleanString = (input) => {
+  let output = '';
+  for (let i = 0; i < input.length; i += 1) {
+    if (input.charCodeAt(i) <= 127) {
+      output += input.charAt(i);
+    }
+  }
+  output = output.replace(/\0/g, '');
+  return output;
+};
+
+exports.addDays = function FnAddDays(date, amount) {
+  const tzOff = date.getTimezoneOffset() * 60 * 1000;
+  let t = date.getTime();
+  const d = new Date();
+
+  t += 1000 * 60 * 60 * 24 * amount;
+  d.setTime(t);
+
+  const tzOff2 = d.getTimezoneOffset() * 60 * 1000;
+  if (tzOff !== tzOff2) {
+    const diff = tzOff2 - tzOff;
+    t += diff;
+    d.setTime(t);
+  }
+  return d;
+};
+
+exports.addTime = (startTime, addTime) => {
+  try {
+    let newEndTime = moment();
+    if (startTime !== null) newEndTime = moment(startTime, 'HH:mm');
+    if (typeof addTime === 'undefined') {
+      return startTime;
+    }
+    // const newAddTime = moment.duration(addTime);
+    newEndTime.add(addTime, 'minutes');
+    return newEndTime.format('HH:mm');
+  } catch (err) {
+    return startTime;
+  }
+};
+
+exports.timeDiff = (startTime, timeFromNow, addMinutes, displayHrs) => {
+  let newStartTime = moment();
+  if (startTime !== null) newStartTime = moment(startTime, 'HH:mm');
+  const newEndTime = moment(timeFromNow, 'HH:mm');
+
+  if (newStartTime.isAfter(newEndTime)) newEndTime.add(1, 'days');
+
+  let addMinutesToTime = 0;
+  if (typeof addMinutes !== 'undefined') addMinutesToTime = addMinutes;
+  newEndTime.add(addMinutesToTime, 'minutes');
+
+  let minutes = newEndTime.diff(newStartTime, 'minutes');
+  if (minutes < 0) minutes = 0;
+  let returnString = `${minutes}`;
+
+  if (displayHrs) {
+    let hours = newStartTime.diff(newEndTime, 'hours');
+    if (hours < 0) hours = 0;
+
+    if (minutes > 60) {
+      hours = 1;
+      minutes -= 60;
+    }
+    returnString = `${zeroFill(hours, 2)}:${zeroFill(minutes, 2)}`;
+  }
+  return returnString;
+};
+
+exports.minutesToStop = function FnMinutesToStop(seconds) {
+  const timetostopinMinutes = Math.floor(seconds / 60);
+  const timeNow = new Date();
+  timeNow.setMinutes(timeNow.getMinutes() + timetostopinMinutes);
+  return dateFormat(timeNow, 'h:MM TT');
+};
+
+// Logger
 function traceInfo() {
   const orig = Error.prepareStackTrace;
   Error.stackTraceLimit = 4;
@@ -90,9 +202,7 @@ exports.log = (type, message) => {
   log(type, message);
 };
 
-/**
- * Call another Alfred service with PUT
- */
+// Call another Alfred service
 async function callAlfredServicePut(apiURL, body) {
   const options = {
     method: 'PUT',
@@ -119,9 +229,6 @@ exports.callAlfredServicePut = async (apiURL, body) => {
   return apiResponse;
 };
 
-/**
- * Call another Alfred service with Get
- */
 async function callAlfredServiceGet(apiURL) {
   const options = {
     method: 'GET',
@@ -147,9 +254,7 @@ exports.callAlfredServiceGet = async (apiURL) => {
   return apiResponse;
 };
 
-/**
- * Call 3rd party API with PUT
- */
+// Call 3rd party API
 async function callAPIServicePut(apiURL, body) {
   const options = {
     method: 'POST',
@@ -173,9 +278,6 @@ exports.callAPIServicePut = async (apiURL, body) => {
   return apiResponse;
 };
 
-/**
- * Call 3rd party API with GET
- */
 async function callAPIServiceGet(apiURL, body) {
   const options = {
     method: 'GET',
@@ -196,9 +298,7 @@ exports.callAPIService = async (apiURL, body) => {
   return apiResponse;
 };
 
-/**
- * Construct and send JSON response back to caller
- */
+// Construct and send JSON response back to caller
 exports.sendResponse = (res, status, dataObj) => {
   let httpHeaderCode;
   let rtnData = dataObj;
@@ -239,9 +339,7 @@ exports.ping = (res, next) => {
   next();
 };
 
-/**
- * Lights
- */
+// Lights
 exports.getLightName = (param) => {
   const lightName = global.lightNames.filter((o) => o.id.toString() === param.toString());
   if (lightName.length > 0) {
@@ -258,9 +356,6 @@ exports.getLightGroupName = (param) => {
   return '[not defined]';
 };
 
-/**
- * Light scene
- */
 exports.lightSceneXY = (scene) => {
   let xy;
   switch (scene) {
@@ -285,51 +380,7 @@ exports.lightSceneXY = (scene) => {
   return xy;
 };
 
-/**
- * Misc
- */
-exports.isEmptyObject = (obj) => {
-  if (obj == null) return true;
-  if (obj.length > 0) return false;
-  if (obj.length === 0) return true;
-  if (typeof obj !== 'object') return true;
-  return !Object.keys(obj).length;
-};
-
-exports.GetSortOrder = (prop) => {
-  const obj = function AB(a, b) {
-    if (a[prop] > b[prop]) {
-      return 1;
-    }
-    if (a[prop] < b[prop]) return -1;
-    return 0;
-  };
-  return obj;
-};
-
-function zeroFill(number, width) {
-  const pad = width - number.toString().length;
-  if (pad > 0) {
-    return new Array(pad + (/\./.test(number) ? 2 : 1)).join('0') + number;
-  }
-  return `${number}`; // always return a string
-}
-exports.zeroFill = (number, width) => {
-  const response = zeroFill(number, width);
-  return response;
-};
-
-exports.cleanString = (input) => {
-  let output = '';
-  for (let i = 0; i < input.length; i += 1) {
-    if (input.charCodeAt(i) <= 127) {
-      output += input.charAt(i);
-    }
-  }
-  output = output.replace(/\0/g, '');
-  return output;
-};
-
+// Get OS data
 exports.getCpuInfo = () => {
   const load = os.loadavg();
   const cpu = {
@@ -374,6 +425,7 @@ exports.getProcessInfo = () => {
   return processInfo;
 };
 
+// Geo location
 exports.inHomeGeoFence = function FnInHomeGeoFence(lat, long) {
   const geoHomeFile = './geoHome.json';
   const geoFenceHomeData = JSON.parse(fs.readFileSync(geoHomeFile, 'utf8'));
@@ -386,75 +438,8 @@ exports.inJPWorkGeoFence = function FnInJPWorkGeoFence(lat, long) {
   return geolib.isPointInPolygon({ latitude: lat, longitude: long }, geoFenceHomeData);
 };
 
-
-exports.addDays = function FnAddDays(date, amount) {
-  const tzOff = date.getTimezoneOffset() * 60 * 1000;
-  let t = date.getTime();
-  const d = new Date();
-
-  t += 1000 * 60 * 60 * 24 * amount;
-  d.setTime(t);
-
-  const tzOff2 = d.getTimezoneOffset() * 60 * 1000;
-  if (tzOff !== tzOff2) {
-    const diff = tzOff2 - tzOff;
-    t += diff;
-    d.setTime(t);
-  }
-  return d;
-};
-
-exports.addTime = (startTime, addTime) => {
-  try {
-    let newEndTime = moment();
-    if (startTime !== null) newEndTime = moment(startTime, 'HH:mm');
-    if (typeof addTime === 'undefined') {
-      return startTime;
-    }
-    //    const newAddTime = moment.duration(addTime);
-    newEndTime.add(addTime, 'minutes');
-    return newEndTime.format('HH:mm');
-  } catch (err) {
-    return startTime;
-  }
-};
-
-exports.timeDiff = (startTime, timeFromNow, addMinutes, displayHrs) => {
-  let newStartTime = moment();
-  if (startTime !== null) newStartTime = moment(startTime, 'HH:mm');
-  const newEndTime = moment(timeFromNow, 'HH:mm');
-
-  if (newStartTime.isAfter(newEndTime)) newEndTime.add(1, 'days');
-
-  let addMinutesToTime = 0;
-  if (typeof addMinutes !== 'undefined') addMinutesToTime = addMinutes;
-  newEndTime.add(addMinutesToTime, 'minutes');
-
-  let minutes = newEndTime.diff(newStartTime, 'minutes');
-  if (minutes < 0) minutes = 0;
-  let returnString = `${minutes}`;
-
-  if (displayHrs) {
-    let hours = newStartTime.diff(newEndTime, 'hours');
-    if (hours < 0) hours = 0;
-
-    if (minutes > 60) {
-      hours = 1;
-      minutes -= 60;
-    }
-    returnString = `${zeroFill(hours, 2)}:${zeroFill(minutes, 2)}`;
-  }
-  return returnString;
-};
-
-exports.minutesToStop = function FnMinutesToStop(seconds) {
-  const timetostopinMinutes = Math.floor(seconds / 60);
-  const timeNow = new Date();
-  timeNow.setMinutes(timeNow.getMinutes() + timetostopinMinutes);
-  return dateFormat(timeNow, 'h:MM TT');
-};
-
-exports.vaultSecret = async function FnVaultSecret(route) {
+// Vault
+exports.vaultSecret = async function FnVaultSecret(route, key) {
   try {
     const options = {
       apiVersion: 'v1',
@@ -464,8 +449,9 @@ exports.vaultSecret = async function FnVaultSecret(route) {
     // eslint-disable-next-line global-require
     const vault = require('node-vault')(options);
     const vaultData = await vault.read(`secret/${route}`);
-    if (vaultData.data) {
-      return vaultData.data;
+    if (!isEmptyObject(vaultData.data)) {
+      // eslint-disable-next-line no-prototype-builtins
+      return vaultData.data.keys(key)[0];
     } return '';
   } catch (err) {
     log('error', err);
