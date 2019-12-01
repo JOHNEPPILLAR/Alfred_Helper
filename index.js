@@ -9,6 +9,7 @@ const geolib = require('geolib');
 const fs = require('fs');
 const moment = require('moment');
 const dateFormat = require('dateformat');
+const { Pool } = require('pg');
 
 // Misc
 function isEmptyObject(obj) {
@@ -439,7 +440,7 @@ exports.inJPWorkGeoFence = function FnInJPWorkGeoFence(lat, long) {
 };
 
 // Vault
-exports.vaultSecret = async (route, key) => {
+async function vaultSecret(route, key) {
   try {
     const options = {
       apiVersion: 'v1',
@@ -459,4 +460,22 @@ exports.vaultSecret = async (route, key) => {
     log('error', err);
     return '';
   }
+}
+exports.vaultSecret = async (route, key) => {
+  const secret = vaultSecret(route, key);
+  return secret;
+};
+
+// Database connection
+exports.connectToDB = async (database) => {
+  const DataStoreUser = await vaultSecret(process.env.Environment, 'DataStoreUser');
+  const DataStoreUserPassword = await vaultSecret(process.env.Environment, 'DataStoreUserPassword');
+  const commuteDataClient = new Pool({
+    host: process.env.DataStore,
+    database,
+    user: DataStoreUser,
+    password: DataStoreUserPassword,
+    port: 5432,
+  });
+  return commuteDataClient;
 };

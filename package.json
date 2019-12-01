@@ -14,7 +14,8 @@
     "geolib": "^3.1.0",
     "moment": "^2.24.0",
     "dateformat": "^3.0.3",
-    "node-vault": "^0.9.11"
+    "node-vault": "^0.9.11",
+    "pg": "^7.14.0"
   },
   "devDependencies": {
     "eslint": "^6.7.2",
