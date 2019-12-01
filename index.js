@@ -443,8 +443,8 @@ exports.vaultSecret = async (route, key) => {
   try {
     const options = {
       apiVersion: 'v1',
-      endpoint: process.env.vaultURL,
-      token: process.env.vaultToken,
+      endpoint: process.env.VaultURL,
+      token: process.env.VaultToken,
     };
     // eslint-disable-next-line global-require
     const vault = require('node-vault')(options);
