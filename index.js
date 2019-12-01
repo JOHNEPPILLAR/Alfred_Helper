@@ -444,9 +444,8 @@ exports.vaultSecret = async function FnVaultSecret(route, key) {
     const options = {
       apiVersion: 'v1',
       endpoint: process.env.vaultURL,
-      token: process.env.valutToken,
+      token: process.env.vaultToken,
     };
-    log('info', options);
     // eslint-disable-next-line global-require
     const vault = require('node-vault')(options);
     const vaultData = await vault.read(`secret/alfred/${route}`);
@@ -459,7 +458,7 @@ exports.vaultSecret = async function FnVaultSecret(route, key) {
       return '';
     } return '';
   } catch (err) {
-    log('error', err);
+    log(err);
     return '';
   }
 };
