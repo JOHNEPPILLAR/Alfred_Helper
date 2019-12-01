@@ -450,13 +450,17 @@ exports.vaultSecret = async function FnVaultSecret(route, key) {
     const vault = require('node-vault')(options);
     const vaultData = await vault.read(`secret/alfred/${route}`);
     if (!isEmptyObject(vaultData.data)) {
+      log('trace', 'Vault returned some data');
       // eslint-disable-next-line no-prototype-builtins
       if (vaultData.data.hasOwnProperty(key)) {
         log('trace', `Vault secret: ${vaultData.data[key]}`);
-        return vaultData.data[key];
+        return vaultData.data[key][0];
       }
+      log('trace', 'Secret not found');
       return '';
-    } return '';
+    }
+    log('trace', 'Vault data is empty');
+    return '';
   } catch (err) {
     log(err);
     return '';
