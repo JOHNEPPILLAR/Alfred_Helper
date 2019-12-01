@@ -448,7 +448,8 @@ exports.vaultSecret = async function FnVaultSecret(route, key) {
     };
     // eslint-disable-next-line global-require
     const vault = require('node-vault')(options);
-    const vaultData = await vault.read(`secret/${route}`);
+    const vaultData = await vault.read(`secret/alfred/${route}`);
+    log('trace', `Vault secret: ${vaultData.data}`);
     if (!isEmptyObject(vaultData.data)) {
       // eslint-disable-next-line no-prototype-builtins
       if (vaultData.data.hasOwnProperty(key)) {
