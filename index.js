@@ -451,7 +451,10 @@ exports.vaultSecret = async function FnVaultSecret(route, key) {
     const vaultData = await vault.read(`secret/${route}`);
     if (!isEmptyObject(vaultData.data)) {
       // eslint-disable-next-line no-prototype-builtins
-      if (vaultData.data.hasOwnProperty(key)) return vaultData.data[key];
+      if (vaultData.data.hasOwnProperty(key)) {
+        log('trace', `Vault secret: ${vaultData.data[key]}`);
+        return vaultData.data[key];
+      }
       return '';
     } return '';
   } catch (err) {
