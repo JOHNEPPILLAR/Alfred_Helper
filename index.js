@@ -469,10 +469,11 @@ exports.vaultSecret = async (route, key) => {
 
 // Database connection
 exports.connectToDB = async (database) => {
+  const DataStore = await vaultSecret(process.env.Environment, 'DataStore');
   const DataStoreUser = await vaultSecret(process.env.Environment, 'DataStoreUser');
   const DataStoreUserPassword = await vaultSecret(process.env.Environment, 'DataStoreUserPassword');
   const commuteDataClient = new Pool({
-    host: process.env.DataStore,
+    host: DataStore,
     database,
     user: DataStoreUser,
     password: DataStoreUserPassword,
