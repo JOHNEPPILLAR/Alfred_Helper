@@ -10,6 +10,7 @@ const fs = require('fs');
 const moment = require('moment');
 const dateFormat = require('dateformat');
 const { Pool } = require('pg');
+const apn = require('apn');
 
 // Misc
 function isEmptyObject(obj) {
@@ -478,4 +479,20 @@ exports.connectToDB = async (database) => {
     port: 5432,
   });
   return commuteDataClient;
+};
+
+// Apple push notification connection
+exports.connectToAPN = async () => {
+  const IOSNotificationKeyID = await vaultSecret(process.env.Environment, 'IOSNotificationKeyID');
+  const IOSNotificationTeamID = await vaultSecret(process.env.Environment, 'IOSNotificationTeamID');
+  const IOSPushKey = await vaultSecret(process.env.Environment, 'IOSPushKey');
+  const apnProvider = new apn.Provider({
+    token: {
+      key: IOSPushKey,
+      keyId: IOSNotificationKeyID,
+      teamId: IOSNotificationTeamID,
+    },
+    production: true,
+  });
+  return apnProvider;
 };
