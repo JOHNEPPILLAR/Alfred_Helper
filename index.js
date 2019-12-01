@@ -448,19 +448,12 @@ exports.vaultSecret = async (route, key) => {
     };
     // eslint-disable-next-line global-require
     const vault = require('node-vault')(options);
-    log('trace', 'Connected to Vault');
     const vaultData = await vault.read(`secret/alfred/${route}`);
     if (!isEmptyObject(vaultData.data)) {
-      log('trace', 'Vault returned data');
       // eslint-disable-next-line no-prototype-builtins
-      if (vaultData.data.hasOwnProperty(key)) {
-        log('trace', `Vault secret: ${vaultData.data[key]}`);
-        return vaultData.data[key][0];
-      }
-      log('trace', 'Secret not found');
+      if (vaultData.data.hasOwnProperty(key)) return vaultData.data[key];
       return '';
     }
-    log('trace', 'Vault data is empty');
     return '';
   } catch (err) {
     log('error', err);
