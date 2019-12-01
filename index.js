@@ -439,7 +439,7 @@ exports.inJPWorkGeoFence = function FnInJPWorkGeoFence(lat, long) {
 };
 
 // Vault
-exports.vaultSecret = async function FnVaultSecret(route, key) {
+exports.vaultSecret = async (route, key) => {
   try {
     const options = {
       apiVersion: 'v1',
@@ -451,7 +451,7 @@ exports.vaultSecret = async function FnVaultSecret(route, key) {
     log('trace', 'Connected to Vault');
     const vaultData = await vault.read(`secret/alfred/${route}`);
     if (!isEmptyObject(vaultData.data)) {
-      log('trace', 'Vault returned some data');
+      log('trace', 'Vault returned data');
       // eslint-disable-next-line no-prototype-builtins
       if (vaultData.data.hasOwnProperty(key)) {
         log('trace', `Vault secret: ${vaultData.data[key]}`);
@@ -463,7 +463,7 @@ exports.vaultSecret = async function FnVaultSecret(route, key) {
     log('trace', 'Vault data is empty');
     return '';
   } catch (err) {
-    log(err);
+    log('error', err);
     return '';
   }
 };
