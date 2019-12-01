@@ -448,6 +448,7 @@ exports.vaultSecret = async function FnVaultSecret(route, key) {
     };
     // eslint-disable-next-line global-require
     const vault = require('node-vault')(options);
+    log('trace', 'Connected to Vault');
     const vaultData = await vault.read(`secret/alfred/${route}`);
     if (!isEmptyObject(vaultData.data)) {
       log('trace', 'Vault returned some data');

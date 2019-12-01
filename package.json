@@ -17,10 +17,10 @@
     "node-vault": "^0.9.11"
   },
   "devDependencies": {
-    "eslint": "^6.7.1",
+    "eslint": "^6.7.2",
     "eslint-config-airbnb-base": "^14.0.0",
     "eslint-plugin-import": "^2.18.2",
-    "snyk": "^1.252.0"
+    "snyk": "^1.253.0"
   },
   "scripts": {
     "test": "snyk test"
