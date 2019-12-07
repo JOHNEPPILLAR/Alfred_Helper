@@ -454,12 +454,12 @@ async function vaultSecret(route, key) {
     if (!isEmptyObject(vaultData.data)) {
       // eslint-disable-next-line no-prototype-builtins
       if (vaultData.data.hasOwnProperty(key)) return vaultData.data[key];
-      return '';
+      throw new Error('No key found');
     }
-    return '';
+    throw new Error('No key found');
   } catch (err) {
     log('error', err);
-    return '';
+    return err;
   }
 }
 exports.vaultSecret = async (route, key) => {
