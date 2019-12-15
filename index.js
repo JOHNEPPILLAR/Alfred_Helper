@@ -210,7 +210,7 @@ async function vaultSecret(route, key) {
     const options = {
       apiVersion: 'v1',
       endpoint: process.env.VAULT_URL,
-      token: process.env.VAULT_Token,
+      token: process.env.VAULT_TOKEN,
     };
     // eslint-disable-next-line global-require
     const vault = require('node-vault')(options);
