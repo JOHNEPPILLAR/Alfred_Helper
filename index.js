@@ -156,7 +156,7 @@ async function log(type, message) {
   let logger;
 
   try {
-    if (process.env.Environment === 'development') {
+    if (process.env.ENVIRONMENT === 'development') {
       logger = pino({
         level: 'trace',
         prettyPrint: {
@@ -204,8 +204,37 @@ exports.log = (type, message) => {
   log(type, message);
 };
 
+// Vault
+async function vaultSecret(route, key) {
+  try {
+    const options = {
+      apiVersion: 'v1',
+      endpoint: process.env.VAULT_URL,
+      token: process.env.VAULT_Token,
+    };
+    // eslint-disable-next-line global-require
+    const vault = require('node-vault')(options);
+    const vaultData = await vault.read(`secret/alfred/${route}`);
+    if (!isEmptyObject(vaultData.data)) {
+      // eslint-disable-next-line no-prototype-builtins
+      if (vaultData.data.hasOwnProperty(key)) return vaultData.data[key];
+      throw new Error('No key found');
+    }
+    throw new Error('No key found');
+  } catch (err) {
+    log('error', err);
+    return err;
+  }
+}
+exports.vaultSecret = async (route, key) => {
+  const secret = vaultSecret(route, key);
+  return secret;
+};
+
 // Call another Alfred service
 async function callAlfredServicePut(apiURL, body) {
+  const ClientAccessKey = await vaultSecret(process.env.ENVIRONMENT, 'ClientAccessKey');
+
   const options = {
     method: 'PUT',
     uri: apiURL,
@@ -214,7 +243,7 @@ async function callAlfredServicePut(apiURL, body) {
       rejectUnauthorized: false,
     },
     headers: {
-      'client-access-key': process.env.ClientAccessKey,
+      'client-access-key': ClientAccessKey,
       'api-trace-id': global.APITraceID,
     },
     body,
@@ -232,6 +261,8 @@ exports.callAlfredServicePut = async (apiURL, body) => {
 };
 
 async function callAlfredServiceGet(apiURL) {
+  const ClientAccessKey = await vaultSecret(process.env.ENVIRONMENT, 'ClientAccessKey');
+
   const options = {
     method: 'GET',
     uri: apiURL,
@@ -240,7 +271,7 @@ async function callAlfredServiceGet(apiURL) {
       rejectUnauthorized: false,
     },
     headers: {
-      'client-access-key': process.env.ClientAccessKey,
+      'client-access-key': ClientAccessKey,
       'api-trace-id': global.APITraceID,
     },
   };
@@ -440,38 +471,11 @@ exports.inJPWorkGeoFence = function FnInJPWorkGeoFence(lat, long) {
   return geolib.isPointInPolygon({ latitude: lat, longitude: long }, geoFenceHomeData);
 };
 
-// Vault
-async function vaultSecret(route, key) {
-  try {
-    const options = {
-      apiVersion: 'v1',
-      endpoint: process.env.VaultURL,
-      token: process.env.VaultToken,
-    };
-    // eslint-disable-next-line global-require
-    const vault = require('node-vault')(options);
-    const vaultData = await vault.read(`secret/alfred/${route}`);
-    if (!isEmptyObject(vaultData.data)) {
-      // eslint-disable-next-line no-prototype-builtins
-      if (vaultData.data.hasOwnProperty(key)) return vaultData.data[key];
-      throw new Error('No key found');
-    }
-    throw new Error('No key found');
-  } catch (err) {
-    log('error', err);
-    return err;
-  }
-}
-exports.vaultSecret = async (route, key) => {
-  const secret = vaultSecret(route, key);
-  return secret;
-};
-
 // Database connection
 exports.connectToDB = async (database) => {
-  const DataStore = await vaultSecret(process.env.Environment, 'DataStore');
-  const DataStoreUser = await vaultSecret(process.env.Environment, 'DataStoreUser');
-  const DataStoreUserPassword = await vaultSecret(process.env.Environment, 'DataStoreUserPassword');
+  const DataStore = await vaultSecret(process.env.ENVIRONMENT, 'DataStore');
+  const DataStoreUser = await vaultSecret(process.env.ENVIRONMENT, 'DataStoreUser');
+  const DataStoreUserPassword = await vaultSecret(process.env.ENVIRONMENT, 'DataStoreUserPassword');
   const commuteDataClient = new Pool({
     host: DataStore,
     database,
@@ -484,9 +488,9 @@ exports.connectToDB = async (database) => {
 
 // Apple push notification connection
 exports.connectToAPN = async () => {
-  const IOSNotificationKeyID = await vaultSecret(process.env.Environment, 'IOSNotificationKeyID');
-  const IOSNotificationTeamID = await vaultSecret(process.env.Environment, 'IOSNotificationTeamID');
-  const IOSPushKey = await vaultSecret(process.env.Environment, 'IOSPushKey');
+  const IOSNotificationKeyID = await vaultSecret(process.env.ENVIRONMENT, 'IOSNotificationKeyID');
+  const IOSNotificationTeamID = await vaultSecret(process.env.ENVIRONMENT, 'IOSNotificationTeamID');
+  const IOSPushKey = await vaultSecret(process.env.ENVIRONMENT, 'IOSPushKey');
   const apnProvider = new apn.Provider({
     token: {
       key: IOSPushKey,
