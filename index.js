@@ -207,22 +207,13 @@ exports.log = (type, message) => {
 // Vault
 async function vaultSecret(route, key) {
   try {
-    const roleName = 'alfred';
     const options = {
       apiVersion: 'v1',
       endpoint: process.env.VAULT_URL,
+      token: process.env.VAULT_TOKEN,
     };
     // eslint-disable-next-line global-require
-    let vault = require('node-vault')(options);
-    const appRoldID = await vault.getApproleRoleId({ role_name: roleName });
-    const secretID = await vault.getApproleRoleSecret({ role_name: roleName });
-    const tmpVaultLogin = await vault.approleLogin({
-      role_id: appRoldID.data.role_id,
-      secret_id: secretID.data.secret_id,
-    });
-    options.token = tmpVaultLogin.auth.client_token;
-    // eslint-disable-next-line global-require
-    vault = require('node-vault')(options); // Login with new token
+    const vault = require('node-vault')(options);
     const vaultData = await vault.read(`secret/alfred/${route}`);
     if (!isEmptyObject(vaultData.data)) {
       // eslint-disable-next-line no-prototype-builtins
