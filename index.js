@@ -476,14 +476,15 @@ exports.connectToDB = async (database) => {
   const DataStore = await vaultSecret(process.env.ENVIRONMENT, 'DataStore');
   const DataStoreUser = await vaultSecret(process.env.ENVIRONMENT, 'DataStoreUser');
   const DataStoreUserPassword = await vaultSecret(process.env.ENVIRONMENT, 'DataStoreUserPassword');
-  const commuteDataClient = new Client({
+  const dataClient = new Client({
     host: DataStore,
     database,
     user: DataStoreUser,
     password: DataStoreUserPassword,
     port: 5432,
   });
-  return commuteDataClient;
+  dataClient.connect();
+  return dataClient;
 };
 
 // Apple push notification connection
