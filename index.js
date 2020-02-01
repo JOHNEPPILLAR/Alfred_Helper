@@ -483,7 +483,7 @@ exports.connectToDB = async (database) => {
     password: DataStoreUserPassword,
     port: 5432,
   });
-  dataClient.connect();
+  await dataClient.connect();
   return dataClient;
 };
 
