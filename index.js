@@ -11,6 +11,7 @@ const moment = require('moment');
 const dateFormat = require('dateformat');
 const { Client } = require('pg');
 const apn = require('apn');
+const { google } = require('googleapis');
 
 // Misc
 function isEmptyObject(obj) {
@@ -501,4 +502,48 @@ exports.connectToAPN = async () => {
     production: true,
   });
   return apnProvider;
+};
+
+exports.kidsAtHomeToday = async () => {
+  let credentials = await vaultSecret(process.env.ENVIRONMENT, 'GoogleAPIKey');
+  credentials = JSON.parse(credentials);
+
+  // Configure a JWT auth client
+  const jwtClient = new google.auth.JWT(
+    credentials.client_email,
+    null,
+    credentials.private_key,
+    ['https://www.googleapis.com/auth/calendar.events.readonly'],
+  );
+  try {
+    // Authenticate request
+    log('trace', 'Login to Google API');
+    await jwtClient.authorize();
+    log('trace', 'Connected to Google API');
+
+    // Call Google Calendar API
+    const googleAPICalendarID = await vaultSecret(process.env.ENVIRONMENT, 'GoogleAPICalendarID');
+    const calendar = google.calendar('v3');
+    log('trace', 'Check if girls staying @ JP\'s today');
+    const events = await calendar.events.list({
+      auth: jwtClient,
+      calendarId: googleAPICalendarID,
+      timeMin: moment().clone().startOf('day').toISOString(),
+      timeMax: moment().clone().endOf('day').toISOString(),
+      singleEvents: true,
+      orderBy: 'startTime',
+      q: 'Girls @ JP',
+    });
+
+    // Process calendar events
+    if (events.data.items.length > 0) {
+      log('trace', 'Girls staying @ JP\'s today');
+      return true;
+    }
+    log('trace', 'Girls not staying @ JP\'s today');
+    return false;
+  } catch (err) {
+    log('error', err.message);
+    return err;
+  }
 };
