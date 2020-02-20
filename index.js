@@ -504,6 +504,7 @@ exports.connectToAPN = async () => {
   return apnProvider;
 };
 
+// Check google cal to see if kids are staying
 exports.kidsAtHomeToday = async () => {
   let credentials = await vaultSecret(process.env.ENVIRONMENT, 'GoogleAPIKey');
   credentials = JSON.parse(credentials);
@@ -546,4 +547,40 @@ exports.kidsAtHomeToday = async () => {
     log('error', err.message);
     return err;
   }
+};
+
+// Check today to see if it's a bank holiday or weekend
+exports.checkForBankHolidayWeekend = async () => {
+  log('trace', 'Check for bank holidays and weekends');
+  const url = 'https://www.gov.uk/bank-holidays.json';
+  const toDay = new Date();
+  const isWeekend = toDay.getDay() === 6 || toDay.getDay() === 0;
+
+  if (isWeekend) {
+    log('trace', "It's the weekend");
+    return true;
+  }
+
+  const returnData = await callAPIServiceGet(url);
+  if (returnData instanceof Error) {
+    log('trace', returnData.message);
+    return returnData;
+  }
+
+  let bankHolidays = [];
+  try {
+    bankHolidays = returnData['england-and-wales'].events;
+    if (bankHolidays.length === 0) throw Error('No bank holiday data');
+  } catch (err) {
+    log('error', err.message);
+    return err;
+  }
+
+  bankHolidays = bankHolidays.filter((a) => a.date === dateFormat(toDay, 'yyyy-mm-dd'));
+  if (bankHolidays.length === 0) {
+    log('trace', 'It\'s a weekday');
+    return false;
+  }
+  log('trace', `It's ${bankHolidays[0].title}`);
+  return true;
 };
