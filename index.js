@@ -215,6 +215,22 @@ async function vaultSecret(route, key) {
     };
     // eslint-disable-next-line global-require
     const vault = require('node-vault')(options);
+
+    // Check if vault is sealed
+    let vaultStatus = await vault.status();
+    if (vaultStatus.sealed) {
+      vaultStatus = null;
+      log('trace', 'Unsealing vault');
+      vault.unseal({ secret_shares: 1, key: process.env.VAULT_TOKEN_1 });
+      vault.unseal({ secret_shares: 2, key: process.env.VAULT_TOKEN_2 });
+      vault.unseal({ secret_shares: 3, key: process.env.VAULT_TOKEN_3 });
+      vaultStatus = await vault.status();
+      if (vaultStatus.sealed) {
+        log('error', 'Unable to unseal vault');
+        throw new Error('Unable to unseal vault');
+      }
+    }
+
     const vaultData = await vault.read(`secret/alfred/${route}`);
     if (!isEmptyObject(vaultData.data)) {
       // eslint-disable-next-line no-prototype-builtins

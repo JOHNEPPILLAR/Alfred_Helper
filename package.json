@@ -6,7 +6,7 @@
   "license": "MIT",
   "snyk": true,
   "dependencies": {
-    "pino": "^5.16.0",
+    "pino": "^5.17.0",
     "request-promise": "^4.2.5",
     "path": "^0.12.7",
     "os": "^0.1.1",
@@ -14,7 +14,7 @@
     "moment": "^2.24.0",
     "dateformat": "^3.0.3",
     "node-vault": "^0.9.12",
-    "pg": "^7.18.1",
+    "pg": "^7.18.2",
     "apn": "^2.2.0",
     "googleapis": "^47.0.0"
   },
@@ -22,7 +22,7 @@
     "eslint": "^6.8.0",
     "eslint-config-airbnb-base": "^14.0.0",
     "eslint-plugin-import": "^2.20.1",
-    "snyk": "^1.290.2"
+    "snyk": "^1.297.2"
   },
   "scripts": {
     "test": "snyk test"
