@@ -1,7 +1,7 @@
 {
   "name": "alfred_helper_functions",
-  "version": "1.1.0",
-  "description": "ALFRED - Heler functions",
+  "version": "1.2.0",
+  "description": "ALFRED - Helper functions",
   "author": "JP",
   "license": "MIT",
   "snyk": true,

@@ -6,7 +6,6 @@ const rp = require('request-promise');
 const os = require('os');
 const path = require('path');
 const geolib = require('geolib');
-const fs = require('fs');
 const moment = require('moment');
 const dateFormat = require('dateformat');
 const { Client } = require('pg');
@@ -476,15 +475,15 @@ exports.getProcessInfo = () => {
 };
 
 // Geo location
-exports.inHomeGeoFence = function FnInHomeGeoFence(lat, long) {
-  const geoHomeFile = './geoHome.json';
-  const geoFenceHomeData = JSON.parse(fs.readFileSync(geoHomeFile, 'utf8'));
+exports.inHomeGeoFence = async function FnInHomeGeoFence(lat, long) {
+  const geoHome = await vaultSecret(process.env.ENVIRONMENT, 'geoHome');
+  const geoFenceHomeData = JSON.parse(geoHome);
   return geolib.isPointInPolygon({ latitude: lat, longitude: long }, geoFenceHomeData);
 };
 
-exports.inJPWorkGeoFence = function FnInJPWorkGeoFence(lat, long) {
-  const geoJPWorkFile = './geoJPWork.json';
-  const geoFenceHomeData = JSON.parse(fs.readFileSync(geoJPWorkFile, 'utf8'));
+exports.inJPWorkGeoFence = async function FnInJPWorkGeoFence(lat, long) {
+  const geoJPWork = await vaultSecret(process.env.ENVIRONMENT, 'geoJPWork');
+  const geoFenceHomeData = JSON.parse(geoJPWork);
   return geolib.isPointInPolygon({ latitude: lat, longitude: long }, geoFenceHomeData);
 };
 
