@@ -220,8 +220,8 @@ async function vaultSecret(route, key) {
     if (vaultStatus.sealed) {
       vaultStatus = null;
       log('trace', 'Unsealing vault');
-      vault.unseal({ secret_shares: 1, key: process.env.VAULT_TOKEN_1 });
-      vault.unseal({ secret_shares: 2, key: process.env.VAULT_TOKEN_2 });
+      vault.unseal({ secret_shares: 3, key: process.env.VAULT_TOKEN_1 });
+      vault.unseal({ secret_shares: 3, key: process.env.VAULT_TOKEN_2 });
       vault.unseal({ secret_shares: 3, key: process.env.VAULT_TOKEN_3 });
       vaultStatus = await vault.status();
       if (vaultStatus.sealed) {
@@ -522,16 +522,18 @@ exports.connectToAPN = async () => {
 // Check google cal to see if kids are staying
 exports.kidsAtHomeToday = async () => {
   let credentials = await vaultSecret(process.env.ENVIRONMENT, 'GoogleAPIKey');
-  credentials = JSON.parse(credentials);
 
-  // Configure a JWT auth client
-  const jwtClient = new google.auth.JWT(
-    credentials.client_email,
-    null,
-    credentials.private_key,
-    ['https://www.googleapis.com/auth/calendar.events.readonly'],
-  );
   try {
+    credentials = JSON.parse(credentials);
+
+    // Configure a JWT auth client
+    const jwtClient = new google.auth.JWT(
+      credentials.client_email,
+      null,
+      credentials.private_key,
+      ['https://www.googleapis.com/auth/calendar.events.readonly'],
+    );
+
     // Authenticate request
     log('trace', 'Login to Google API');
     await jwtClient.authorize();
