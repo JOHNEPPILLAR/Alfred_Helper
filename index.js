@@ -519,6 +519,53 @@ exports.connectToAPN = async () => {
   return apnProvider;
 };
 
+// Check google cal to see if working from home
+exports.workingFromHomeToday = async () => {
+  let credentials = await vaultSecret(process.env.ENVIRONMENT, 'GoogleAPIKey');
+
+  try {
+    credentials = JSON.parse(credentials);
+
+    // Configure a JWT auth client
+    const jwtClient = new google.auth.JWT(
+      credentials.client_email,
+      null,
+      credentials.private_key,
+      ['https://www.googleapis.com/auth/calendar.events.readonly'],
+    );
+
+    // Authenticate request
+    log('trace', 'Login to Google API');
+    await jwtClient.authorize();
+    log('trace', 'Connected to Google API');
+
+    // Call Google Calendar API
+    const googleAPICalendarID = await vaultSecret(process.env.ENVIRONMENT, 'GoogleAPICalendarID');
+    const calendar = google.calendar('v3');
+    log('trace', 'Check if working from home today');
+    const events = await calendar.events.list({
+      auth: jwtClient,
+      calendarId: googleAPICalendarID,
+      timeMin: moment().clone().startOf('day').toISOString(),
+      timeMax: moment().clone().endOf('day').toISOString(),
+      singleEvents: true,
+      orderBy: 'startTime',
+      q: 'JP work from home',
+    });
+
+    // Process calendar events
+    if (events.data.items.length > 0) {
+      log('trace', 'working from home today');
+      return true;
+    }
+    log('trace', 'Not working from home today');
+    return false;
+  } catch (err) {
+    log('error', err.message);
+    return err;
+  }
+};
+
 // Check google cal to see if kids are staying
 exports.kidsAtHomeToday = async () => {
   let credentials = await vaultSecret(process.env.ENVIRONMENT, 'GoogleAPIKey');

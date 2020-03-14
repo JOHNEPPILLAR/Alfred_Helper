@@ -7,23 +7,23 @@
   "snyk": true,
   "dependencies": {
     "pino": "^5.17.0",
-    "pino-pretty": "^3.6.0",
+    "pino-pretty": "^3.6.1",
     "request-promise": "^4.2.5",
     "path": "^0.12.7",
     "os": "^0.1.1",
     "geolib": "^3.2.1",
     "moment": "^2.24.0",
     "dateformat": "^3.0.3",
-    "node-vault": "^0.9.12",
+    "node-vault": "^0.9.13",
     "pg": "^7.18.2",
     "apn": "^2.2.0",
-    "googleapis": "^47.0.0"
+    "googleapis": "^48.0.0"
   },
   "devDependencies": {
     "eslint": "^6.8.0",
-    "eslint-config-airbnb-base": "^14.0.0",
+    "eslint-config-airbnb-base": "^14.1.0",
     "eslint-plugin-import": "^2.20.1",
-    "snyk": "^1.297.2"
+    "snyk": "^1.298.1"
   },
   "scripts": {
     "test": "snyk test"
