@@ -540,7 +540,7 @@ exports.workingFromHomeToday = async () => {
     log('trace', 'Connected to Google API');
 
     // Call Google Calendar API
-    const googleAPICalendarID = await vaultSecret(process.env.ENVIRONMENT, 'GoogleAPICalendarID');
+    const googleAPICalendarID = await vaultSecret(process.env.ENVIRONMENT, 'JPGoogleAPICalendarID');
     const calendar = google.calendar('v3');
     log('trace', 'Check if working from home today');
     const events = await calendar.events.list({
