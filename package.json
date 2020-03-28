@@ -8,6 +8,7 @@
   "dependencies": {
     "pino": "^5.17.0",
     "pino-pretty": "^3.6.1",
+    "request": "^2.88.2",
     "request-promise": "^4.2.5",
     "path": "^0.12.7",
     "os": "^0.1.1",
