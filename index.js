@@ -11,6 +11,7 @@ const dateFormat = require('dateformat');
 const { Client } = require('pg');
 const apn = require('apn');
 const { google } = require('googleapis');
+const Ajv = require('ajv');
 
 // Misc
 function isEmptyObject(obj) {
@@ -80,11 +81,11 @@ exports.addTime = (startTime, addTime) => {
   try {
     let newEndTime = moment();
     if (startTime !== null) newEndTime = moment(startTime, 'HH:mm');
-    if (typeof addTime === 'undefined') {
-      return startTime;
-    }
-    // const newAddTime = moment.duration(addTime);
-    newEndTime.add(addTime, 'minutes');
+    if (typeof addTime === 'undefined') return startTime;
+    newEndTime.add(
+      addTime,
+      'minutes',
+    );
     return newEndTime.format('HH:mm');
   } catch (err) {
     return startTime;
@@ -94,22 +95,33 @@ exports.addTime = (startTime, addTime) => {
 exports.timeDiff = (startTime, timeFromNow, addMinutes, displayHrs) => {
   let newStartTime = moment();
   if (startTime !== null) newStartTime = moment(startTime, 'HH:mm');
-  const newEndTime = moment(timeFromNow, 'HH:mm');
+  const newEndTime = moment(
+    timeFromNow,
+    'HH:mm',
+  );
 
   if (newStartTime.isAfter(newEndTime)) newEndTime.add(1, 'days');
 
   let addMinutesToTime = 0;
   if (typeof addMinutes !== 'undefined') addMinutesToTime = addMinutes;
-  newEndTime.add(addMinutesToTime, 'minutes');
+  newEndTime.add(
+    addMinutesToTime,
+    'minutes',
+  );
 
-  let minutes = newEndTime.diff(newStartTime, 'minutes');
+  let minutes = newEndTime.diff(
+    newStartTime,
+    'minutes',
+  );
   if (minutes < 0) minutes = 0;
   let returnString = `${minutes}`;
 
   if (displayHrs) {
-    let hours = newStartTime.diff(newEndTime, 'hours');
+    let hours = newStartTime.diff(
+      newEndTime,
+      'hours',
+    );
     if (hours < 0) hours = 0;
-
     if (minutes > 60) {
       hours = 1;
       minutes -= 60;
@@ -123,7 +135,10 @@ exports.minutesToStop = function FnMinutesToStop(seconds) {
   const timetostopinMinutes = Math.floor(seconds / 60);
   const timeNow = new Date();
   timeNow.setMinutes(timeNow.getMinutes() + timetostopinMinutes);
-  return dateFormat(timeNow, 'h:MM TT');
+  return dateFormat(
+    timeNow,
+    'h:MM TT',
+  );
 };
 
 // Logger
@@ -166,7 +181,10 @@ async function log(type, message) {
     } else {
       logger = pino();
     }
-    let child = logger.child({ index: 'log', 'trace-id': `${global.APITraceID}` });
+    let child = logger.child({
+      index: 'log',
+      'trace-id': `${global.APITraceID}`,
+    });
 
     switch (type) {
       case 'info':
@@ -219,13 +237,19 @@ async function vaultSecret(route, key) {
     let vaultStatus = await vault.status();
     if (vaultStatus.sealed) {
       vaultStatus = null;
-      log('trace', 'Unsealing vault');
-      vault.unseal({ secret_shares: 3, key: process.env.VAULT_TOKEN_1 });
-      vault.unseal({ secret_shares: 3, key: process.env.VAULT_TOKEN_2 });
+      log(
+        'trace',
+        'Unsealing vault',
+      );
+      vault.unseal({ secret_shares: 1, key: process.env.VAULT_TOKEN_1 });
+      vault.unseal({ secret_shares: 2, key: process.env.VAULT_TOKEN_2 });
       vault.unseal({ secret_shares: 3, key: process.env.VAULT_TOKEN_3 });
       vaultStatus = await vault.status();
       if (vaultStatus.sealed) {
-        log('error', 'Unable to unseal vault');
+        log(
+          'error',
+          'Unable to unseal vault',
+        );
         throw new Error('Unable to unseal vault');
       }
     }
@@ -249,7 +273,10 @@ exports.vaultSecret = async (route, key) => {
 
 // Call another Alfred service
 async function callAlfredServicePut(apiURL, body) {
-  const ClientAccessKey = await vaultSecret(process.env.ENVIRONMENT, 'ClientAccessKey');
+  const ClientAccessKey = await vaultSecret(
+    process.env.ENVIRONMENT,
+    'ClientAccessKey',
+  );
 
   const options = {
     method: 'PUT',
@@ -277,7 +304,10 @@ exports.callAlfredServicePut = async (apiURL, body) => {
 };
 
 async function callAlfredServiceGet(apiURL) {
-  const ClientAccessKey = await vaultSecret(process.env.ENVIRONMENT, 'ClientAccessKey');
+  const ClientAccessKey = await vaultSecret(
+    process.env.ENVIRONMENT,
+    'ClientAccessKey',
+  );
 
   const options = {
     method: 'GET',
@@ -318,7 +348,10 @@ async function callAPIServicePut(apiURL, body) {
   try {
     return await rp(options);
   } catch (err) {
-    log('error', `Can not connect to 3rd party api service: ${err.message}`);
+    log(
+      'error',
+      `Can not connect to 3rd party api service: ${err.message}`,
+    );
     return err;
   }
 }
@@ -337,8 +370,14 @@ async function callAPIServiceGet(apiURL, body) {
   try {
     return rp(options);
   } catch (err) {
-    log('error', `Error calling: ${err.message}`);
-    log('error', err.message);
+    log(
+      'error',
+      `Error calling: ${err.message}`,
+    );
+    log(
+      'error',
+      err.message,
+    );
     return err;
   }
 }
@@ -348,17 +387,18 @@ exports.callAPIService = async (apiURL, body) => {
 };
 
 // Construct and send JSON response back to caller
-exports.sendResponse = (res, status, dataObj) => {
+function sendResponse(res, status, dataObj) {
   let httpHeaderCode;
   let rtnData = dataObj;
 
   switch (status) {
     case 500: // Internal server error
       httpHeaderCode = 500;
-      rtnData = dataObj.message;
+      rtnData = { error: dataObj.message };
       break;
     case 400: // Invalid params
       httpHeaderCode = 400;
+      rtnData = { error: dataObj.message };
       break;
     case 401: // Not authorised, invalid app_key
       httpHeaderCode = 401;
@@ -369,28 +409,33 @@ exports.sendResponse = (res, status, dataObj) => {
     default:
       httpHeaderCode = 200;
   }
-
-  const returnJSON = {
-    data: rtnData,
-  };
-
-  res.send(httpHeaderCode, returnJSON); // Send response back to caller
+  res.send(httpHeaderCode, rtnData); // Send response back to caller
+}
+exports.sendResponse = (res, status, dataObj) => {
+  sendResponse(res, status, dataObj);
 };
 
 // Ping API
 exports.ping = (res, next) => {
-  log('trace', 'Ping API called');
-
+  log(
+    'trace',
+    'Ping API called',
+  );
   const ackJSON = {
     reply: 'pong',
   };
-  res.send(200, ackJSON); // Send response back to caller
+  res.send(
+    200,
+    ackJSON,
+  ); // Send response back to caller
   next();
 };
 
 // Lights
 exports.getLightName = (param) => {
-  const lightName = global.lightNames.filter((o) => o.id.toString() === param.toString());
+  const lightName = global.lightNames.filter(
+    (o) => o.id.toString() === param.toString(),
+  );
   if (lightName.length > 0) {
     return lightName[0].name;
   }
@@ -398,7 +443,9 @@ exports.getLightName = (param) => {
 };
 
 exports.getLightGroupName = (param) => {
-  const lightGroupName = global.lightGroupNames.filter((o) => o.id.toString() === param.toString());
+  const lightGroupName = global.lightGroupNames.filter(
+    (o) => o.id.toString() === param.toString(),
+  );
   if (lightGroupName.length > 0) {
     return lightGroupName[0].name;
   }
@@ -478,20 +525,32 @@ exports.getProcessInfo = () => {
 exports.inHomeGeoFence = async function FnInHomeGeoFence(lat, long) {
   const geoHome = await vaultSecret(process.env.ENVIRONMENT, 'geoHome');
   const geoFenceHomeData = JSON.parse(geoHome);
-  return geolib.isPointInPolygon({ latitude: lat, longitude: long }, geoFenceHomeData);
+  return geolib.isPointInPolygon(
+    { latitude: lat, longitude: long },
+    geoFenceHomeData,
+  );
 };
 
 exports.inJPWorkGeoFence = async function FnInJPWorkGeoFence(lat, long) {
   const geoJPWork = await vaultSecret(process.env.ENVIRONMENT, 'geoJPWork');
   const geoFenceHomeData = JSON.parse(geoJPWork);
-  return geolib.isPointInPolygon({ latitude: lat, longitude: long }, geoFenceHomeData);
+  return geolib.isPointInPolygon(
+    { latitude: lat, longitude: long },
+    geoFenceHomeData,
+  );
 };
 
 // Database connection
 exports.connectToDB = async (database) => {
   const DataStore = await vaultSecret(process.env.ENVIRONMENT, 'DataStore');
-  const DataStoreUser = await vaultSecret(process.env.ENVIRONMENT, 'DataStoreUser');
-  const DataStoreUserPassword = await vaultSecret(process.env.ENVIRONMENT, 'DataStoreUserPassword');
+  const DataStoreUser = await vaultSecret(
+    process.env.ENVIRONMENT,
+    'DataStoreUser',
+  );
+  const DataStoreUserPassword = await vaultSecret(
+    process.env.ENVIRONMENT,
+    'DataStoreUserPassword',
+  );
   const dataClient = new Client({
     host: DataStore,
     database,
@@ -505,8 +564,14 @@ exports.connectToDB = async (database) => {
 
 // Apple push notification connection
 exports.connectToAPN = async () => {
-  const IOSNotificationKeyID = await vaultSecret(process.env.ENVIRONMENT, 'IOSNotificationKeyID');
-  const IOSNotificationTeamID = await vaultSecret(process.env.ENVIRONMENT, 'IOSNotificationTeamID');
+  const IOSNotificationKeyID = await vaultSecret(
+    process.env.ENVIRONMENT,
+    'IOSNotificationKeyID',
+  );
+  const IOSNotificationTeamID = await vaultSecret(
+    process.env.ENVIRONMENT,
+    'IOSNotificationTeamID',
+  );
   const IOSPushKey = await vaultSecret(process.env.ENVIRONMENT, 'IOSPushKey');
   const apnProvider = new apn.Provider({
     token: {
@@ -535,14 +600,26 @@ exports.workingFromHomeToday = async () => {
     );
 
     // Authenticate request
-    log('trace', 'Login to Google API');
+    log(
+      'trace',
+      'Login to Google API',
+    );
     await jwtClient.authorize();
-    log('trace', 'Connected to Google API');
+    log(
+      'trace',
+      'Connected to Google API',
+    );
 
     // Call Google Calendar API
-    const googleAPICalendarID = await vaultSecret(process.env.ENVIRONMENT, 'JPGoogleAPICalendarID');
+    const googleAPICalendarID = await vaultSecret(
+      process.env.ENVIRONMENT,
+      'JPGoogleAPICalendarID',
+    );
     const calendar = google.calendar('v3');
-    log('trace', 'Check if working from home today');
+    log(
+      'trace',
+      'Check if working from home today',
+    );
     const events = await calendar.events.list({
       auth: jwtClient,
       calendarId: googleAPICalendarID,
@@ -555,15 +632,60 @@ exports.workingFromHomeToday = async () => {
 
     // Process calendar events
     if (events.data.items.length > 0) {
-      log('trace', 'working from home today');
+      log(
+        'trace',
+        'working from home today',
+      );
       return true;
     }
-    log('trace', 'Not working from home today');
+    log(
+      'trace',
+      'Not working from home today',
+    );
     return false;
   } catch (err) {
-    log('error', err.message);
+    log(
+      'error',
+      err.message,
+    );
     return err;
   }
+};
+
+// JSON Schema validation functions
+function schemaErrorResponse(schemaErrors) {
+  const errors = schemaErrors.map((error) => ({
+    path: error.dataPath,
+    message: error.message,
+  }));
+  return {
+    message: {
+      inputValidation: 'failed',
+      params: errors,
+    },
+  };
+}
+
+// eslint-disable-next-line arrow-body-style
+exports.validateSchema = (schema) => {
+  return (req, res, next) => {
+    // const ajv = Ajv({ allErrors: true, removeAdditional: 'all' });
+    const ajv = Ajv({ allErrors: true, strictDefaults: true });
+    const valid = ajv.validate(schema, req.params);
+    if (!valid) {
+      log(
+        'error',
+        `Invalid params: ${JSON.stringify(req.params)}`,
+      );
+      return sendResponse(
+        res,
+        400,
+        schemaErrorResponse(ajv.errors),
+      );
+    }
+    next();
+    return true;
+  };
 };
 
 // Check google cal to see if kids are staying
@@ -582,14 +704,26 @@ exports.kidsAtHomeToday = async () => {
     );
 
     // Authenticate request
-    log('trace', 'Login to Google API');
+    log(
+      'trace',
+      'Login to Google API',
+    );
     await jwtClient.authorize();
-    log('trace', 'Connected to Google API');
+    log(
+      'trace',
+      'Connected to Google API',
+    );
 
     // Call Google Calendar API
-    const googleAPICalendarID = await vaultSecret(process.env.ENVIRONMENT, 'GoogleAPICalendarID');
+    const googleAPICalendarID = await vaultSecret(
+      process.env.ENVIRONMENT,
+      'GoogleAPICalendarID',
+    );
     const calendar = google.calendar('v3');
-    log('trace', 'Check if girls staying @ JP\'s today');
+    log(
+      'trace',
+      "Check if girls staying @ JP's today",
+    );
     const events = await calendar.events.list({
       auth: jwtClient,
       calendarId: googleAPICalendarID,
@@ -602,32 +736,50 @@ exports.kidsAtHomeToday = async () => {
 
     // Process calendar events
     if (events.data.items.length > 0) {
-      log('trace', 'Girls staying @ JP\'s today');
+      log(
+        'trace',
+        "Girls staying @ JP's today",
+      );
       return true;
     }
-    log('trace', 'Girls not staying @ JP\'s today');
+    log(
+      'trace',
+      "Girls not staying @ JP's today",
+    );
     return false;
   } catch (err) {
-    log('error', err.message);
+    log(
+      'error',
+      err.message,
+    );
     return err;
   }
 };
 
 // Check today to see if it's a bank holiday or weekend
 exports.checkForBankHolidayWeekend = async () => {
-  log('trace', 'Check for bank holidays and weekends');
+  log(
+    'trace',
+    'Check for bank holidays and weekends',
+  );
   const url = 'https://www.gov.uk/bank-holidays.json';
   const toDay = new Date();
   const isWeekend = toDay.getDay() === 6 || toDay.getDay() === 0;
 
   if (isWeekend) {
-    log('trace', "It's the weekend");
+    log(
+      'trace',
+      "It's the weekend",
+    );
     return true;
   }
 
   const returnData = await callAPIServiceGet(url);
   if (returnData instanceof Error) {
-    log('trace', returnData.message);
+    log(
+      'trace',
+      returnData.message,
+    );
     return returnData;
   }
 
@@ -636,15 +788,26 @@ exports.checkForBankHolidayWeekend = async () => {
     bankHolidays = returnData['england-and-wales'].events;
     if (bankHolidays.length === 0) throw Error('No bank holiday data');
   } catch (err) {
-    log('error', err.message);
+    log(
+      'error',
+      err.message,
+    );
     return err;
   }
 
-  bankHolidays = bankHolidays.filter((a) => a.date === dateFormat(toDay, 'yyyy-mm-dd'));
+  bankHolidays = bankHolidays.filter(
+    (a) => a.date === dateFormat(toDay, 'yyyy-mm-dd'),
+  );
   if (bankHolidays.length === 0) {
-    log('trace', 'It\'s a weekday');
+    log(
+      'trace',
+      "It's a weekday",
+    );
     return false;
   }
-  log('trace', `It's ${bankHolidays[0].title}`);
+  log(
+    'trace',
+    `It's ${bankHolidays[0].title}`,
+  );
   return true;
 };
