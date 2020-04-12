@@ -402,6 +402,7 @@ function sendResponse(res, status, dataObj) {
       break;
     case 401: // Not authorised, invalid app_key
       httpHeaderCode = 401;
+      rtnData = { error: dataObj };
       break;
     case 404: // Resource not found
       httpHeaderCode = 404;
