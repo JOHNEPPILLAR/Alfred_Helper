@@ -368,20 +368,16 @@ async function callAPIServiceGet(apiURL, body) {
     body,
   };
   try {
-    return rp(options);
+    return await rp(options);
   } catch (err) {
     log(
       'error',
-      `Error calling: ${err.message}`,
-    );
-    log(
-      'error',
-      err.message,
+      `Can not connect to 3rd party api service: ${err.message}`,
     );
     return err;
   }
 }
-exports.callAPIService = async (apiURL, body) => {
+exports.callAPIServiceGet = async (apiURL, body) => {
   const apiResponse = await callAPIServiceGet(apiURL, body);
   return apiResponse;
 };
