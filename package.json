@@ -19,16 +19,18 @@
     "pg": "^8.0.2",
     "apn": "^2.2.0",
     "googleapis": "^48.0.0",
-    "ajv": "^6.12.0"
+    "ajv": "^6.12.0",
+    "snyk": "^1.316.1"
   },
   "devDependencies": {
     "eslint": "^6.8.0",
     "eslint-config-airbnb-base": "^14.1.0",
-    "eslint-plugin-import": "^2.20.2",
-    "snyk": "^1.305.1"
+    "eslint-plugin-import": "^2.20.2"
   },
   "scripts": {
-    "test": "snyk test"
+    "test": "snyk test",
+    "snyk-protect": "snyk protect",
+    "prepare": "npm run snyk-protect"
   },
   "resolutions": {
     "minimist": "1.2.2"
