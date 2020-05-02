@@ -3,6 +3,7 @@ clear
 echo "Updating 3rd party libs"
 
 rm -rf node_modules
+rm package-lock.json
 ncu -u
 npm update
 npm install
