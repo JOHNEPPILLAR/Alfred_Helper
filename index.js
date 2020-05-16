@@ -145,8 +145,8 @@ exports.minutesToStop = function FnMinutesToStop(seconds) {
 function traceInfo() {
   const orig = Error.prepareStackTrace;
   Error.stackTraceLimit = 4;
-  Error.prepareStackTrace = function prepStack(_, stack) {
-    return stack;
+  Error.prepareStackTrace = function prepStack(_, stackTrace) {
+    return stackTrace;
   };
   const err = new Error();
   const { stack } = err;
@@ -236,7 +236,6 @@ async function vaultSecret(route, key) {
     // Check if vault is sealed
     let vaultStatus = await vault.status();
     if (vaultStatus.sealed) {
-      vaultStatus = null;
       log(
         'trace',
         'Unsealing vault',
@@ -513,7 +512,6 @@ exports.getProcessInfo = () => {
     pid: process.pid,
     memory: process.memoryUsage(),
     uptime: process.uptime(),
-    argv: process.argv,
   };
   return processInfo;
 };
@@ -581,11 +579,10 @@ exports.connectToAPN = async () => {
   return apnProvider;
 };
 
-// Check google cal to see if working from home
-exports.workingFromHomeToday = async () => {
-  let credentials = await vaultSecret(process.env.ENVIRONMENT, 'GoogleAPIKey');
-
+// Connect to google
+async function getGoogleCal(query) {
   try {
+    let credentials = await vaultSecret(process.env.ENVIRONMENT, 'GoogleAPIKey');
     credentials = JSON.parse(credentials);
 
     // Configure a JWT auth client
@@ -615,7 +612,7 @@ exports.workingFromHomeToday = async () => {
     const calendar = google.calendar('v3');
     log(
       'trace',
-      'Check if working from home today',
+      `Check if ${query}`,
     );
     const events = await calendar.events.list({
       auth: jwtClient,
@@ -624,8 +621,23 @@ exports.workingFromHomeToday = async () => {
       timeMax: moment().clone().endOf('day').toISOString(),
       singleEvents: true,
       orderBy: 'startTime',
-      q: 'JP work from home',
+      q: query,
     });
+    return events;
+  } catch (err) {
+    log(
+      'error',
+      err.message,
+    );
+    return err;
+  }
+}
+
+// Check google cal to see if working from home
+exports.workingFromHomeToday = async () => {
+  try {
+    const events = await getGoogleCal('JP work from home');
+    if (events instanceof Error) return events;
 
     // Process calendar events
     if (events.data.items.length > 0) {
@@ -638,6 +650,34 @@ exports.workingFromHomeToday = async () => {
     log(
       'trace',
       'Not working from home today',
+    );
+    return false;
+  } catch (err) {
+    log(
+      'error',
+      err.message,
+    );
+    return err;
+  }
+};
+
+// Check google cal to see if kids are staying
+exports.kidsAtHomeToday = async () => {
+  try {
+    const events = await getGoogleCal('Girls @ JP');
+    if (events instanceof Error) return events;
+
+    // Process calendar events
+    if (events.data.items.length > 0) {
+      log(
+        'trace',
+        "Girls staying @ JP's today",
+      );
+      return true;
+    }
+    log(
+      'trace',
+      "Girls not staying @ JP's today",
     );
     return false;
   } catch (err) {
@@ -683,74 +723,6 @@ exports.validateSchema = (schema) => {
     next();
     return true;
   };
-};
-
-// Check google cal to see if kids are staying
-exports.kidsAtHomeToday = async () => {
-  let credentials = await vaultSecret(process.env.ENVIRONMENT, 'GoogleAPIKey');
-
-  try {
-    credentials = JSON.parse(credentials);
-
-    // Configure a JWT auth client
-    const jwtClient = new google.auth.JWT(
-      credentials.client_email,
-      null,
-      credentials.private_key,
-      ['https://www.googleapis.com/auth/calendar.events.readonly'],
-    );
-
-    // Authenticate request
-    log(
-      'trace',
-      'Login to Google API',
-    );
-    await jwtClient.authorize();
-    log(
-      'trace',
-      'Connected to Google API',
-    );
-
-    // Call Google Calendar API
-    const googleAPICalendarID = await vaultSecret(
-      process.env.ENVIRONMENT,
-      'GoogleAPICalendarID',
-    );
-    const calendar = google.calendar('v3');
-    log(
-      'trace',
-      "Check if girls staying @ JP's today",
-    );
-    const events = await calendar.events.list({
-      auth: jwtClient,
-      calendarId: googleAPICalendarID,
-      timeMin: moment().clone().startOf('day').toISOString(),
-      timeMax: moment().clone().endOf('day').toISOString(),
-      singleEvents: true,
-      orderBy: 'startTime',
-      q: 'Girls @ JP',
-    });
-
-    // Process calendar events
-    if (events.data.items.length > 0) {
-      log(
-        'trace',
-        "Girls staying @ JP's today",
-      );
-      return true;
-    }
-    log(
-      'trace',
-      "Girls not staying @ JP's today",
-    );
-    return false;
-  } catch (err) {
-    log(
-      'error',
-      err.message,
-    );
-    return err;
-  }
 };
 
 // Check today to see if it's a bank holiday or weekend

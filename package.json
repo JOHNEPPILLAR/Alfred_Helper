@@ -13,17 +13,17 @@
     "path": "^0.12.7",
     "os": "^0.1.1",
     "geolib": "^3.2.1",
-    "moment": "^2.25.1",
+    "moment": "^2.25.3",
     "dateformat": "^3.0.3",
     "node-vault": "^0.9.15",
-    "pg": "^8.0.3",
+    "pg": "^8.2.1",
     "apn": "^2.2.0",
-    "googleapis": "^49.0.0",
+    "googleapis": "^51.0.0",
     "ajv": "^6.12.2",
-    "snyk": "^1.316.2"
+    "snyk": "^1.321.0"
   },
   "devDependencies": {
-    "eslint": "^6.8.0",
+    "eslint": "^7.0.0",
     "eslint-config-airbnb-base": "^14.1.0",
     "eslint-plugin-import": "^2.20.2"
   },
