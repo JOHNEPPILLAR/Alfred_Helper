@@ -580,7 +580,7 @@ exports.connectToAPN = async () => {
 };
 
 // Connect to google
-async function getGoogleCal(query) {
+async function getGoogleCal(query, calID) {
   try {
     let credentials = await vaultSecret(process.env.ENVIRONMENT, 'GoogleAPIKey');
     credentials = JSON.parse(credentials);
@@ -604,16 +604,15 @@ async function getGoogleCal(query) {
       'Connected to Google API',
     );
 
-    // Call Google Calendar API
     const googleAPICalendarID = await vaultSecret(
       process.env.ENVIRONMENT,
-      'JPGoogleAPICalendarID',
+      calID,
     );
-    const calendar = google.calendar('v3');
     log(
       'trace',
       `Check if ${query}`,
     );
+    const calendar = google.calendar('v3');
     const events = await calendar.events.list({
       auth: jwtClient,
       calendarId: googleAPICalendarID,
@@ -623,7 +622,7 @@ async function getGoogleCal(query) {
       orderBy: 'startTime',
       q: query,
     });
-    return events;
+    return events.data.items;
   } catch (err) {
     log(
       'error',
@@ -636,14 +635,14 @@ async function getGoogleCal(query) {
 // Check google cal to see if working from home
 exports.workingFromHomeToday = async () => {
   try {
-    const events = await getGoogleCal('JP work from home');
+    const events = await getGoogleCal('JP work from home', 'JPGoogleAPICalendarID');
     if (events instanceof Error) return events;
 
     // Process calendar events
-    if (events.data.items.length > 0) {
+    if (events.length > 0) {
       log(
         'trace',
-        'working from home today',
+        'Working from home today',
       );
       return true;
     }
@@ -664,11 +663,11 @@ exports.workingFromHomeToday = async () => {
 // Check google cal to see if kids are staying
 exports.kidsAtHomeToday = async () => {
   try {
-    const events = await getGoogleCal('Girls @ JP');
+    const events = await getGoogleCal('Girls @ JP', 'GoogleAPICalendarID');
     if (events instanceof Error) return events;
 
     // Process calendar events
-    if (events.data.items.length > 0) {
+    if (events.length > 0) {
       log(
         'trace',
         "Girls staying @ JP's today",
