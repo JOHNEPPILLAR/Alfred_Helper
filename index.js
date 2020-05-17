@@ -536,7 +536,7 @@ exports.inJPWorkGeoFence = async function FnInJPWorkGeoFence(lat, long) {
 };
 
 // Database connection
-exports.connectToDB = async (database) => {
+async function connectToDB(database) {
   const DataStore = await vaultSecret(process.env.ENVIRONMENT, 'DataStore');
   const DataStoreUser = await vaultSecret(
     process.env.ENVIRONMENT,
@@ -556,27 +556,9 @@ exports.connectToDB = async (database) => {
   await dataClient.connect();
   return dataClient;
 };
-
-// Apple push notification connection
-exports.connectToAPN = async () => {
-  const IOSNotificationKeyID = await vaultSecret(
-    process.env.ENVIRONMENT,
-    'IOSNotificationKeyID',
-  );
-  const IOSNotificationTeamID = await vaultSecret(
-    process.env.ENVIRONMENT,
-    'IOSNotificationTeamID',
-  );
-  const IOSPushKey = await vaultSecret(process.env.ENVIRONMENT, 'IOSPushKey');
-  const apnProvider = new apn.Provider({
-    token: {
-      key: IOSPushKey,
-      keyId: IOSNotificationKeyID,
-      teamId: IOSNotificationTeamID,
-    },
-    production: true,
-  });
-  return apnProvider;
+exports.connectToDB = async (database) => {
+  const DBConn = connectToDB(database);
+  return DBConn;
 };
 
 // Connect to google
@@ -779,3 +761,113 @@ exports.checkForBankHolidayWeekend = async () => {
   );
   return true;
 };
+
+// Send iOS push notification to app
+exports.sendPushNotification = async (notificationText) => {
+  try {
+    const deviceTokens = [];
+    const pushSQL = 'SELECT last(device_token, time) as device_token FROM ios_devices';
+
+    log(
+      'trace',
+      'Connect to data store connection pool',
+    );
+    const dbConnection = await connectToDB('devices');
+
+    log(
+      'trace',
+      'Getting IOS devices',
+    );
+    const devicesToNotify = await dbConnection.query(pushSQL);
+
+    log(
+      'trace',
+      'Release the data store connection back to the pool',
+    );
+    await dbConnection.end(); // Close data store connection
+
+    if (devicesToNotify.rowCount === 0) {
+      log(
+        'trace',
+        'No devices to notify',
+      );
+      return;
+    } // Exit function as no devices to process
+
+    // Send iOS notifications what watering has started
+    log(
+      'trace',
+      'Build list of devices to send push notification to',
+    );
+    devicesToNotify.rows.map((device) => deviceTokens.push(device.device_token));
+
+    // Connect to apples push notification service and send notifications
+    const IOSNotificationKeyID = await vaultSecret(
+      process.env.ENVIRONMENT,
+      'IOSNotificationKeyID',
+    );
+    const IOSNotificationTeamID = await vaultSecret(
+      process.env.ENVIRONMENT,
+      'IOSNotificationTeamID',
+    );
+    const IOSPushKey = await vaultSecret(
+      process.env.ENVIRONMENT,
+      'IOSPushKey',
+    );
+    if (IOSNotificationKeyID instanceof Error
+      || IOSNotificationTeamID instanceof Error
+      || IOSPushKey instanceof Error) {
+      log(
+        'error',
+        'Not able to get secret (CERTS) from vault',
+      );
+      return;
+    }
+
+    const apnProvider = new apn.Provider({
+      token: {
+        key: IOSPushKey,
+        keyId: IOSNotificationKeyID,
+        teamId: IOSNotificationTeamID,
+      },
+      production: true,
+    });
+
+    log(
+      'trace',
+      'Send push notification(s)',
+    );
+
+    const notification = new apn.Notification();
+    notification.topic = 'JP.Alfred-IOS';
+    notification.expiry = Math.floor(Date.now() / 1000) + 600; // Expires 10 minutes from now.
+    notification.alert = notificationText;
+    const result = await apnProvider.send(
+      notification,
+      deviceTokens,
+    );
+
+    if (result.sent.length > 0) {
+      log(
+        'info',
+        'Push notification sent',
+      );
+    } else {
+      log(
+        'error',
+        'Push notification faild to be sent',
+      );
+    }
+
+    log(
+      'trace',
+      'Close down connection to push notification service',
+    );
+    await apnProvider.shutdown(); // Close the connection with apn
+  } catch (err) {
+    log(
+      'error',
+      err.message,
+    );
+  }
+}
