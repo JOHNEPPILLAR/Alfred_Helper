@@ -830,7 +830,7 @@ exports.sendPushNotification = async (notificationText) => {
         keyId: IOSNotificationKeyID,
         teamId: IOSNotificationTeamID,
       },
-      production: true,
+      production: false,
     });
 
     log(
@@ -870,4 +870,4 @@ exports.sendPushNotification = async (notificationText) => {
       err.message,
     );
   }
-}
+};
