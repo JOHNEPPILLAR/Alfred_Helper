@@ -839,7 +839,7 @@ exports.sendPushNotification = async (notificationText) => {
     );
 
     const notification = new apn.Notification();
-    notification.topic = 'JP.Alfred-IOS';
+    notification.topic = 'JP.Alfred';
     notification.expiry = Math.floor(Date.now() / 1000) + 600; // Expires 10 minutes from now.
     notification.alert = notificationText;
     const result = await apnProvider.send(
