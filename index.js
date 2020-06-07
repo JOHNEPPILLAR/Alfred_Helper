@@ -405,7 +405,7 @@ function sendResponse(res, status, dataObj) {
     default:
       httpHeaderCode = 200;
   }
-  res.send(httpHeaderCode, rtnData); // Send response back to caller
+  res.send(httpHeaderCode, JSON.stringify(rtnData)); // Send response back to caller
 }
 exports.sendResponse = (res, status, dataObj) => {
   sendResponse(res, status, dataObj);
