@@ -555,7 +555,7 @@ async function connectToDB(database) {
   });
   await dataClient.connect();
   return dataClient;
-};
+}
 exports.connectToDB = async (database) => {
   const DBConn = connectToDB(database);
   return DBConn;
