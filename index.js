@@ -414,7 +414,7 @@ exports.sendResponse = (res, status, dataObj) => {
 // Ping API
 exports.ping = (res, next) => {
   log(
-    'trace',
+    'info',
     'Ping API called',
   );
   const ackJSON = {
