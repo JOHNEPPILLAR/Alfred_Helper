@@ -1003,10 +1003,12 @@ exports.setupRestifyMiddleware = (server, virtualHost) => {
         );
         return;
       }
-      if (req.headers['client-access-key'] !== ClientAccessKey) {
+      if (req.headers['client-access-key'] !== ClientAccessKey
+        && req.query.clientaccesskey !== ClientAccessKey) {
+        // No key, send error back to caller
         log(
           'warn',
-          `Invaid client access key: ${req.headers['client-access-key']}`,
+          'No or invaid client access key',
         );
         sendResponse(
           res,
