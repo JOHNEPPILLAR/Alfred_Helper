@@ -12,6 +12,8 @@ const { Client } = require('pg');
 const apn = require('apn');
 const { google } = require('googleapis');
 const Ajv = require('ajv');
+const restify = require('restify');
+const UUID = require('pure-uuid');
 
 // Misc
 function isEmptyObject(obj) {
@@ -859,4 +861,190 @@ exports.sendPushNotification = async (notificationText) => {
       err.message,
     );
   }
+};
+
+// Setup restify server
+exports.setupRestifyServer = async (virtualHost, version) => {
+  // Restify server Init
+  log('trace', 'Getting certs');
+  const key = await vaultSecret(
+    process.env.ENVIRONMENT,
+    `${virtualHost}_key`,
+  );
+  const certificate = await vaultSecret(
+    process.env.ENVIRONMENT,
+    `${virtualHost}_cert`,
+  );
+
+  if (key instanceof Error || certificate instanceof Error) {
+    log(
+      'error',
+      'Not able to get secret (CERTS) from vault',
+    );
+    log(
+      'warn',
+      'Exit the app',
+    );
+    process.exit(1); // Exit app
+  }
+
+  const server = restify.createServer({
+    name: virtualHost,
+    version,
+    key,
+    certificate,
+  });
+  return server;
+};
+
+// Middleware
+exports.setupRestifyMiddleware = (server, virtualHost) => {
+  server.on('NotFound', (req, res, err) => {
+    log(
+      'error',
+      `${err.message}`,
+    );
+    sendResponse(
+      res,
+      404,
+      { error: err.message },
+    );
+  });
+  server.use(restify.plugins.jsonBodyParser({ mapParams: true }));
+  server.use(restify.plugins.acceptParser(server.acceptable));
+  server.use(restify.plugins.queryParser({ mapParams: true }));
+  server.use(restify.plugins.fullResponse());
+  server.use((req, res, next) => {
+    log(
+      'trace',
+      `URL: ${req.url}`,
+    );
+    if (typeof req.params !== 'undefined' && req.params !== null) {
+      log(
+        'trace',
+        `Params: ${JSON.stringify(req.params)}`,
+      );
+    }
+    if (typeof req.query !== 'undefined' && req.query !== null) {
+      log(
+        'trace',
+        `Query: ${JSON.stringify(req.query)}`,
+      );
+    }
+    log(
+      'trace',
+      `Body: ${JSON.stringify(req.body)}`,
+    );
+    res.setHeader(
+      'Content-Security-Policy',
+      `default-src 'self' ${virtualHost}`,
+    );
+    res.setHeader(
+      'Strict-Transport-Security',
+      'max-age=31536000; includeSubDomains',
+    );
+    res.setHeader(
+      'X-Frame-Options',
+      'SAMEORIGIN',
+    );
+    res.setHeader(
+      'X-XSS-Protection',
+      '1; mode=block',
+    );
+    res.setHeader(
+      'X-Content-Type-Options',
+      'nosniff',
+    );
+    res.setHeader(
+      'Referrer-Policy',
+      'no-referrer',
+    );
+    next();
+  });
+  server.use(async (req, res, next) => {
+    // Check for a trace id
+    if (typeof req.headers['api-trace-id'] === 'undefined') {
+      global.APITraceID = new UUID(4);
+    } else {
+      global.APITraceID = req.headers['api-trace-id'];
+    }
+
+    // Check for valid auth key
+    const ClientAccessKey = await vaultSecret(
+      process.env.ENVIRONMENT,
+      'ClientAccessKey',
+    );
+    if (ClientAccessKey instanceof Error) {
+      log(
+        'error',
+        'Not able to get secret (ClientAccessKey) from vault',
+      );
+      log(
+        'error',
+        ClientAccessKey.message,
+      );
+      sendResponse(
+        res,
+        500,
+        new Error('There was a problem with the auth service'),
+      );
+      return;
+    }
+    if (req.headers['client-access-key'] !== ClientAccessKey) {
+      log(
+        'warn',
+        `Invaid client access key: ${req.headers['client-access-key']}`,
+      );
+      sendResponse(
+        res,
+        401,
+        'There was a problem authenticating you',
+      );
+      return;
+    }
+    next();
+  });
+};
+
+// Capture and process api server errors
+exports.captureRestifyServerErrors = (server) => {
+  // Stop server if process close event is issued
+  function cleanExit() {
+    log(
+      'warn',
+      'Service stopping',
+    );
+    log(
+      'trace',
+      'Close rest server',
+    );
+    server.close(() => {
+      log(
+        'info',
+        'Exit the app',
+      );
+      process.exit(1); // Exit app
+    });
+  }
+  process.on('SIGINT', () => {
+    cleanExit();
+  });
+  process.on('SIGTERM', () => {
+    cleanExit();
+  });
+  process.on('SIGUSR2', () => {
+    cleanExit();
+  });
+  process.on('uncaughtException', (err) => {
+    log(
+      'error',
+      err.message,
+    ); // log the error
+  });
+  process.on('unhandledRejection', (reason, p) => {
+    log(
+      'error',
+      `Unhandled Rejection at Promise: ${p} - ${reason}`,
+    ); // log the error
+  });
 };
