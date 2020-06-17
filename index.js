@@ -212,7 +212,7 @@ async function log(type, message) {
         child.info(message);
         break;
       default:
-        logger.info(`${message}`);
+        child.info(`${message}`);
         break;
     }
   } catch (err) {
@@ -253,6 +253,7 @@ async function vaultSecret(route, key) {
     throw new Error('No key found');
   } catch (err) {
     log('error', err);
+    log('error', err.stack);
     return err;
   }
 }
