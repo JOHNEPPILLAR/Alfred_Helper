@@ -145,28 +145,24 @@ exports.minutesToStop = function FnMinutesToStop(seconds) {
 
 // Logger
 function traceInfo() {
-  const orig = Error.prepareStackTrace;
+  const originalStack = Error.prepareStackTrace;
   Error.stackTraceLimit = 4;
-  Error.prepareStackTrace = function prepStack(_, stackTrace) {
-    return stackTrace;
-  };
+  Error.prepareStackTrace = function prepStack(_, stackTrace) { return stackTrace; };
   const err = new Error();
   const { stack } = err;
-  const frame = stack[2];
-  let fileName;
-  let functionName;
-  let lineNumber;
+  Error.prepareStackTrace = originalStack;
+
+  let returnStr;
+
   try {
-    fileName = path.basename(frame.getFileName());
-    functionName = frame.getFunctionName();
-    lineNumber = frame.getLineNumber();
+    const fileName = path.basename(stack[3].getFileName());
+    const functionName = stack[3].getFunctionName();
+    const lineNumber = stack[3].getLineNumber();
+    returnStr = `${fileName}:${functionName !== null ? ` ${functionName}` : ''}(${lineNumber})`;
   } catch (e) {
-    fileName = '[No trace data]';
-    functionName = '[No trace data]';
-    lineNumber = '[No trace data]';
+    returnStr = '[No trace data]';
   }
-  Error.prepareStackTrace = orig;
-  return `${fileName}: ${functionName === 'null' ? `(${functionName}) ` : ''}(${lineNumber})`;
+  return returnStr;
 }
 
 async function log(type, message) {
