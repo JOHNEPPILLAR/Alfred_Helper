@@ -152,7 +152,7 @@ function traceInfo() {
   };
   const err = new Error();
   const { stack } = err;
-  const frame = stack[3];
+  const frame = stack[2];
   let fileName;
   let functionName;
   let lineNumber;
@@ -166,7 +166,7 @@ function traceInfo() {
     lineNumber = '[No trace data]';
   }
   Error.prepareStackTrace = orig;
-  return `${fileName} : ${functionName} (${lineNumber})`;
+  return `${fileName}: ${functionName === 'null' ? `(${functionName}) ` : ''}(${lineNumber})`;
 }
 
 async function log(type, message) {
@@ -934,7 +934,7 @@ exports.setupRestifyMiddleware = (server, virtualHost) => {
           `Params: ${JSON.stringify(req.params)}`,
         );
       }
-      if (typeof req.query !== 'undefined' && req.query !== null) {
+      if (!isEmptyObject(req.query)) {
         log(
           'trace',
           `Query: ${JSON.stringify(req.query)}`,
