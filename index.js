@@ -379,7 +379,7 @@ exports.callAPIServiceGet = async (apiURL, body) => {
 };
 
 // Construct and send JSON response back to caller
-function sendResponse(res, status, dataObj) {
+function sendResponse(res, next, status, dataObj) {
   let httpHeaderCode;
   let rtnData = dataObj;
 
@@ -403,9 +403,10 @@ function sendResponse(res, status, dataObj) {
       httpHeaderCode = 200;
   }
   res.json(httpHeaderCode, rtnData); // Send response back to caller
+  next(false);
 }
-exports.sendResponse = (res, status, dataObj) => {
-  sendResponse(res, status, dataObj);
+exports.sendResponse = (res, next, status, dataObj) => {
+  sendResponse(res, next, status, dataObj);
 };
 
 // Ping API
@@ -417,11 +418,12 @@ exports.ping = (res, next) => {
   const ackJSON = {
     reply: 'pong',
   };
-  res.send(
+  sendResponse(
+    res,
+    next,
     200,
     ackJSON,
-  ); // Send response back to caller
-  next();
+  );
 };
 
 // Lights
@@ -922,7 +924,7 @@ exports.setupRestifyMiddleware = (server, virtualHost) => {
       sendResponse(
         res,
         404,
-        { error: err.message },
+        err.message,
       );
     });
     server.use(restify.plugins.jsonBodyParser({ mapParams: true }));
@@ -934,7 +936,7 @@ exports.setupRestifyMiddleware = (server, virtualHost) => {
         'trace',
         `URL: ${req.url}`,
       );
-      if (typeof req.params !== 'undefined' && req.params !== null) {
+      if (!isEmptyObject(req.params)) {
         log(
           'trace',
           `Params: ${JSON.stringify(req.params)}`,
@@ -946,7 +948,7 @@ exports.setupRestifyMiddleware = (server, virtualHost) => {
           `Query: ${JSON.stringify(req.query)}`,
         );
       }
-      if (typeof req.body !== 'undefined' && req.body !== null) {
+      if (!isEmptyObject(req.body)) {
         log(
           'trace',
           `Body: ${JSON.stringify(req.body)}`,
