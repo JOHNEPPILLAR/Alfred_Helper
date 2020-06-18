@@ -222,6 +222,15 @@ exports.log = (type, message) => {
 
 // Vault
 async function vaultSecret(route, key) {
+  const timeout = setTimeout(() => {
+    const err = new Error('Timeout reached, not able to communicate with Vault');
+    log(
+      'error',
+      err.message,
+    );
+    return err;
+  }, 5000);
+
   try {
     const options = {
       apiVersion: 'v1',
@@ -242,6 +251,7 @@ async function vaultSecret(route, key) {
     }
 
     const vaultData = await vault.read(`secret/alfred/${route}`);
+    if (timeout) clearTimeout(timeout);
     if (!isEmptyObject(vaultData.data)) {
       // eslint-disable-next-line no-prototype-builtins
       if (vaultData.data.hasOwnProperty(key)) return vaultData.data[key];
@@ -249,7 +259,6 @@ async function vaultSecret(route, key) {
     throw new Error('No key found');
   } catch (err) {
     log('error', err);
-    log('error', err.stack);
     return err;
   }
 }
