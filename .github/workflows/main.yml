@@ -1,0 +1,56 @@
+name: CI
+
+on: [push]
+
+jobs:
+  security:
+    name: 🛡️ Check for vulnerabilities
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      - name: Slack Notification on failure
+        if: failure()
+        uses: rtCamp/action-slack-notify@master
+        env:
+          SLACK_CHANNEL: github_builds
+          SLACK_USERNAME: 'Github CI'
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_ICON: https://avatars2.githubusercontent.com/u/25100863?s=40&v=4
+          SLACK_TITLE: Build status
+          SLACK_MESSAGE: '🛡️ Scan found vulnerabilities'
+          SLACK_COLOR: '#ff0000'
+
+  node:
+    name: 📝 Setup node & check packages install ok
+    runs-on: ubuntu-latest
+    steps:
+      - name: Read .nvmrc
+        run: echo "##[set-output name=NVMRC;]$(cat .node-version)"
+        id: nvm
+
+      - name: Use Node.js (.nvmrc)
+        uses: actions/setup-node@v1
+        with:
+          node-version: '${{ steps.nvm.outputs.NVMRC }}'
+
+      - name: NPM Install
+        run: npm install
+        env:
+          CI: true
+
+  build:
+    name: 🛠 Build
+    runs-on: ubuntu-latest
+    needs: [node]
+    steps:
+      - name: "Automated Version Bump"
+      uses: "phips28/gh-action-bump-version@master"
+      with:
+        tag-prefix: ''
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

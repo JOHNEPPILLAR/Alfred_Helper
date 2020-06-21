@@ -1,33 +1,26 @@
 {
   "name": "alfred_helper_functions",
-  "version": "1.2.0",
+  "version": "2.0.0",
   "description": "ALFRED - Helper functions",
   "author": "JP",
   "license": "MIT",
   "snyk": true,
   "dependencies": {
-    "pino": "^6.3.2",
-    "pino-pretty": "^4.0.0",
     "request": "^2.88.2",
-    "request-promise": "^4.2.5",
-    "path": "^0.12.7",
-    "os": "^0.1.1",
-    "geolib": "^3.3.1",
-    "moment": "^2.26.0",
-    "dateformat": "^3.0.3",
-    "node-vault": "^0.9.18",
-    "pg": "^8.2.1",
-    "apn": "^2.2.0",
-    "googleapis": "^52.1.0",
-    "ajv": "^6.12.2",
-    "snyk": "^1.342.2",
-    "restify": "^8.5.1",
-    "pure-uuid": "^1.6.0"
+    "request-promise": "^4.2.5"
   },
   "devDependencies": {
+    "babel-eslint": "^10.1.0",
     "eslint": "^7.2.0",
+    "eslint-config-airbnb": "^18.2.0",
     "eslint-config-airbnb-base": "^14.2.0",
-    "eslint-plugin-import": "^2.21.2"
+    "eslint-config-prettier": "^6.11.0",
+    "eslint-plugin-import": "^2.21.2",
+    "eslint-plugin-jsx-a11y": "^6.3.1",
+    "eslint-plugin-prettier": "^3.1.4",
+    "eslint-plugin-react": "^7.20.0",
+    "eslint-plugin-react-hooks": "^4.0.4",
+    "prettier": "^2.0.5"
   },
   "scripts": {
     "test": "snyk test",
