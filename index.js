@@ -2,10 +2,11 @@
  * Import external libraries
  */
 const rp = require('request-promise');
+
+//const { Client } = require('pg');
 //const geolib = require('geolib');
 //const moment = require('moment');
 //const dateFormat = require('dateformat');
-//const { Client } = require('pg');
 //const apn = require('apn');
 //const { google } = require('googleapis');
 //const Ajv = require('ajv');
@@ -42,12 +43,8 @@ async function callAPIServiceGet(apiURL) {
     return err;
   }
 }
-exports.callAPIServiceGet = async (apiURL) => {
-  const apiResponse = await callAPIServiceGet(apiURL);
-  return apiResponse;
-};
 
-async function callAlfredServiceGet(apiURL, apiAccessKey) {
+async function callAlfredServiceGet(apiURL) {
   const options = {
     method: 'GET',
     uri: apiURL,
@@ -56,17 +53,21 @@ async function callAlfredServiceGet(apiURL, apiAccessKey) {
       rejectUnauthorized: false,
     },
     headers: {
-      'client-access-key': apiAccessKey,
+      'client-access-key': this.apiAccessKey,
     },
   };
 
   try {
     return await rp(options);
   } catch (err) {
-    return err;
+    return new Error(`Error response - ${err.error.error}`);
   }
 }
-exports.callAlfredServiceGet = async (apiURL, apiAccessKey) => {
-  const apiResponse = await callAlfredServiceGet(apiURL, apiAccessKey);
-  return apiResponse;
+
+module.exports = {
+  // Generial helper functions
+  isEmptyObject,
+  // Get data from APIs
+  callAPIServiceGet,
+  callAlfredServiceGet,
 };
