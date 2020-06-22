@@ -2,14 +2,13 @@
  * Import external libraries
  */
 const rp = require('request-promise');
+const Ajv = require('ajv');
 
-//const { Client } = require('pg');
 //const geolib = require('geolib');
 //const moment = require('moment');
 //const dateFormat = require('dateformat');
 //const apn = require('apn');
 //const { google } = require('googleapis');
-//const Ajv = require('ajv');
 
 /** *************************
  * Generial helper functions
@@ -22,10 +21,32 @@ function isEmptyObject(obj) {
   if (typeof obj !== 'object') return true;
   return !Object.keys(obj).length;
 }
-exports.isEmptyObject = (obj) => {
-  const response = isEmptyObject(obj);
-  return response;
-};
+
+// JSON Schema validation functions
+function schemaErrorResponse(schemaErrors) {
+  const errors = schemaErrors.map((error) => ({
+    path: error.dataPath,
+    message: error.message,
+  }));
+  return {
+    message: {
+      inputValidation: 'failed',
+      params: errors,
+    },
+  };
+}
+
+function validateSchema(req, schema) {
+  const ajv = Ajv({ allErrors: true, strictDefaults: true });
+  const valid = ajv.validate(schema, req.params);
+  if (!valid) {
+    this.logger.trace(
+      `${this.traceStack()} - Invalid params: ${JSON.stringify(req.params)}`,
+    );
+    return schemaErrorResponse(ajv.errors);
+  }
+  return true;
+}
 
 /** *************************
  * Get data from APIs
@@ -67,6 +88,7 @@ async function callAlfredServiceGet(apiURL) {
 module.exports = {
   // Generial helper functions
   isEmptyObject,
+  validateSchema,
   // Get data from APIs
   callAPIServiceGet,
   callAlfredServiceGet,
