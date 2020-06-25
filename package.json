@@ -6,9 +6,7 @@
   "license": "MIT",
   "snyk": true,
   "dependencies": {
-    "request": "^2.88.2",
-    "request-promise": "^4.2.5",
-    "ajv": "^6.12.2",
+    "moment": "^2.27.0",
     "snyk": "^1.346.0"
   },
   "devDependencies": {
