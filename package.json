@@ -7,15 +7,15 @@
   "snyk": true,
   "dependencies": {
     "moment": "^2.27.0",
-    "snyk": "^1.346.0"
+    "snyk": "^1.349.0"
   },
   "devDependencies": {
     "babel-eslint": "^10.1.0",
-    "eslint": "^7.2.0",
+    "eslint": "^7.3.1",
     "eslint-config-airbnb": "^18.2.0",
     "eslint-config-airbnb-base": "^14.2.0",
     "eslint-config-prettier": "^6.11.0",
-    "eslint-plugin-import": "^2.21.2",
+    "eslint-plugin-import": "^2.22.0",
     "eslint-plugin-jsx-a11y": "^6.3.1",
     "eslint-plugin-prettier": "^3.1.4",
     "eslint-plugin-react": "^7.20.0",
@@ -26,8 +26,5 @@
     "test": "snyk test",
     "snyk-protect": "snyk protect",
     "prepare": "npm run snyk-protect"
-  },
-  "resolutions": {
-    "minimist": "1.2.2"
   }
 }
