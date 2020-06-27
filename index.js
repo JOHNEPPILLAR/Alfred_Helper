@@ -26,6 +26,14 @@ function getSortOrder(prop) {
   return obj;
 }
 
+function zeroFill(number, width) {
+  const pad = width - number.toString().length;
+  if (pad > 0) {
+    return new Array(pad + (/\./.test(number) ? 2 : 1)).join('0') + number;
+  }
+  return `${number}`; // always return a string
+}
+
 function timeDiff(startTime, timeFromNow, addMinutes, displayHrs) {
   let newStartTime = moment();
   if (startTime !== null) newStartTime = moment(startTime, 'HH:mm');
@@ -53,12 +61,33 @@ function timeDiff(startTime, timeFromNow, addMinutes, displayHrs) {
   return returnString;
 }
 
-function zeroFill(number, width) {
-  const pad = width - number.toString().length;
-  if (pad > 0) {
-    return new Array(pad + (/\./.test(number) ? 2 : 1)).join('0') + number;
+function addDays(date, amount) {
+  const tzOff = date.getTimezoneOffset() * 60 * 1000;
+  let t = date.getTime();
+  const d = new Date();
+
+  t += 1000 * 60 * 60 * 24 * amount;
+  d.setTime(t);
+
+  const tzOff2 = d.getTimezoneOffset() * 60 * 1000;
+  if (tzOff !== tzOff2) {
+    const diff = tzOff2 - tzOff;
+    t += diff;
+    d.setTime(t);
   }
-  return `${number}`; // always return a string
+  return d;
+}
+
+function addTime(startTime, timeToAdd) {
+  try {
+    let newEndTime = moment();
+    if (startTime !== null) newEndTime = moment(startTime, 'HH:mm');
+    if (typeof timeToAdd === 'undefined') return startTime;
+    newEndTime.add(timeToAdd, 'minutes');
+    return newEndTime.format('HH:mm');
+  } catch (err) {
+    return startTime;
+  }
 }
 
 module.exports = {
@@ -67,4 +96,6 @@ module.exports = {
   getSortOrder,
   timeDiff,
   zeroFill,
+  addDays,
+  addTime,
 };
