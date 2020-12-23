@@ -7,7 +7,7 @@
   "snyk": true,
   "dependencies": {
     "moment": "^2.27.0",
-    "snyk": "^1.364.2"
+    "snyk": "^1.425.4"
   },
   "devDependencies": {
     "babel-eslint": "^10.1.0",
